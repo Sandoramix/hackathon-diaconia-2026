@@ -407,7 +407,34 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
   const [newDate, setNewDate] = useState("");
   const [maxOccupants, setMaxOccupants] = useState(1);
 
-  const hasWindow = !!(task?.windowStart && task?.windowEnd && task?.slotDurationHours);
+  // Editable window state — synced from task once loaded
+  const [ws, setWs] = useState("");
+  const [we, setWe] = useState("");
+  const [wdh, setWdh] = useState<number | "">("");
+  const [windowDirty, setWindowDirty] = useState(false);
+
+  // Sync from task on load
+  const taskRef = { ws: task?.windowStart ?? "", we: task?.windowEnd ?? "", wdh: task?.slotDurationHours ?? "" as number | "" };
+  useEffect(() => {
+    if (task && !windowDirty) {
+      setWs(task.windowStart ?? "");
+      setWe(task.windowEnd ?? "");
+      setWdh(task.slotDurationHours ?? "");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.id]);
+
+  const hasWindow = !!(ws && we && wdh);
+
+  const updateMut = api.task.update.useMutation({
+    onSuccess: () => {
+      toast.success("Fascia aggiornata");
+      setWindowDirty(false);
+      void utils.task.getById.invalidate({ id: taskId });
+      void utils.task.list.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const addSlotMut = api.task.addSlot.useMutation({
     onSuccess: () => {
@@ -440,9 +467,17 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
     return format(new Date(slot.date), "HH:mm");
   }
 
+  function slotsPerDay() {
+    if (!ws || !we || !wdh) return 0;
+    return Math.floor(
+      (new Date(`1970-01-01T${we}:00`).getTime() - new Date(`1970-01-01T${ws}:00`).getTime()) /
+        ((wdh as number) * 3600 * 1000),
+    );
+  }
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Slot — {task?.title}</DialogTitle>
         </DialogHeader>
@@ -450,12 +485,80 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
           <p className="py-4 text-center text-sm">Caricamento...</p>
         ) : (
           <div className="space-y-4">
-            {hasWindow && (
-              <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
-                Fascia {task!.windowStart}–{task!.windowEnd}, {task!.slotDurationHours}h per slot.
-                Aggiungi un giorno per generare tutti gli slot automaticamente.
+            {/* ── Fascia oraria ── */}
+            <div className="rounded-lg border dark:border-gray-700 p-3 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                Fascia oraria slot
               </p>
-            )}
+              <div className="flex gap-2 items-end flex-wrap">
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-500">Inizio</Label>
+                  <Input
+                    type="time"
+                    value={ws}
+                    onChange={(e) => { setWs(e.target.value); setWindowDirty(true); }}
+                    className="w-28"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-500">Fine</Label>
+                  <Input
+                    type="time"
+                    value={we}
+                    onChange={(e) => { setWe(e.target.value); setWindowDirty(true); }}
+                    className="w-28"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-gray-500">Durata (ore)</Label>
+                  <Input
+                    type="number"
+                    min={0.5}
+                    max={24}
+                    step={0.5}
+                    value={wdh}
+                    onChange={(e) => { setWdh(parseFloat(e.target.value) || ""); setWindowDirty(true); }}
+                    className="w-24"
+                    placeholder="es. 2"
+                  />
+                </div>
+              </div>
+              {hasWindow && (
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  → {slotsPerDay()} slot per giorno ({ws}–{we}, ogni {wdh}h)
+                </p>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  disabled={!windowDirty || updateMut.isPending}
+                  onClick={() =>
+                    updateMut.mutate({
+                      id: taskId,
+                      windowStart: ws || null,
+                      windowEnd: we || null,
+                      slotDurationHours: typeof wdh === "number" ? wdh : null,
+                    })
+                  }
+                >
+                  Salva fascia
+                </Button>
+                {hasWindow && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-500"
+                    onClick={() => {
+                      setWs(""); setWe(""); setWdh(""); setWindowDirty(true);
+                    }}
+                  >
+                    Rimuovi
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* ── Add slot / day ── */}
             <div className="flex gap-2">
               <Input
                 type={hasWindow ? "date" : "datetime-local"}
@@ -483,6 +586,8 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
               </Button>
             </div>
             <Separator />
+
+            {/* ── Slot list ── */}
             {Object.entries(slotsByDate).map(([dateKey, slots]) => (
               <div key={dateKey}>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">
@@ -511,7 +616,7 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
               </div>
             ))}
             {task?.slots.length === 0 && (
-              <p className="py-4 text-center text-sm text-gray-500">Nessuno slot</p>
+              <p className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">Nessuno slot</p>
             )}
           </div>
         )}
