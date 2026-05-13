@@ -161,6 +161,7 @@ const UtentiPage: NextPageWithLayout = function UtentiPage() {
             onEdit={setEditUser}
             onDelete={(id) => softDeleteMut.mutate({ id })}
             onRestore={(id) => restoreMut.mutate({ id })}
+            onStorico={(id) => void router.push(`/tutor/studenti/${id}`)}
           />
         </TabsContent>
 
@@ -171,6 +172,7 @@ const UtentiPage: NextPageWithLayout = function UtentiPage() {
             onEdit={setEditUser}
             onDelete={(id) => softDeleteMut.mutate({ id })}
             onRestore={(id) => restoreMut.mutate({ id })}
+            onStorico={(id) => void router.push(`/tutor/studenti/${id}`)}
           />
         </TabsContent>
       </Tabs>
@@ -305,6 +307,7 @@ function UserTable({
   onEdit,
   onDelete,
   onRestore,
+  onStorico,
 }: {
   users: {
     id: string;
@@ -320,6 +323,7 @@ function UserTable({
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onRestore: (id: string) => void;
+  onStorico: (id: string) => void;
 }) {
   if (loading) return <p className="py-8 text-center text-sm text-gray-500">Caricamento...</p>;
   if (!users.length) return <p className="py-8 text-center text-sm text-gray-500">Nessun utente</p>;
@@ -356,6 +360,11 @@ function UserTable({
             </TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-1">
+                {!u.deletedAt && (
+                  <Button size="sm" variant="ghost" onClick={() => onStorico(u.id)}>
+                    Storico
+                  </Button>
+                )}
                 {!u.deletedAt && (
                   <Button size="sm" variant="ghost" onClick={() => onEdit(u.id)}>
                     Modifica

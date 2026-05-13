@@ -5,6 +5,7 @@ import { eventRouter } from "~/server/api/routers/event";
 import { taskRouter } from "~/server/api/routers/task";
 import { feedbackRouter } from "~/server/api/routers/feedback";
 import { chatRouter } from "~/server/api/routers/chat";
+import { historyRouter } from "~/server/api/routers/history";
 
 export const appRouter = createTRPCRouter({
   user: userRouter,
@@ -13,6 +14,7 @@ export const appRouter = createTRPCRouter({
   task: taskRouter,
   feedback: feedbackRouter,
   chat: chatRouter,
+  history: historyRouter,
 });
 
 export type AppRouter = typeof appRouter;

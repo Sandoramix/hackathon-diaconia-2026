@@ -61,21 +61,21 @@ const CambioPasswordPage: NextPageWithLayout = function CambioPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold text-gray-900">Imposta la tua password</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Imposta la tua password</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           È il tuo primo accesso. Scegli una nuova password.
         </p>
       </div>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">
             Nuova password
           </label>
           <input
             id="password"
             type="password"
             autoComplete="new-password"
-            className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#1e3eb0] focus:ring-2 focus:ring-[#1e3eb0]/20 disabled:opacity-50"
+            className="flex h-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-gray-100 outline-none transition focus:border-[#1e3eb0] focus:ring-2 focus:ring-[#1e3eb0]/20 disabled:opacity-50"
             {...form.register("password")}
           />
           {form.formState.errors.password && (
@@ -83,14 +83,14 @@ const CambioPasswordPage: NextPageWithLayout = function CambioPasswordPage() {
           )}
         </div>
         <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+          <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-200">
             Conferma password
           </label>
           <input
             id="confirmPassword"
             type="password"
             autoComplete="new-password"
-            className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#1e3eb0] focus:ring-2 focus:ring-[#1e3eb0]/20 disabled:opacity-50"
+            className="flex h-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-gray-100 outline-none transition focus:border-[#1e3eb0] focus:ring-2 focus:ring-[#1e3eb0]/20 disabled:opacity-50"
             {...form.register("confirmPassword")}
           />
           {form.formState.errors.confirmPassword && (
@@ -99,7 +99,7 @@ const CambioPasswordPage: NextPageWithLayout = function CambioPasswordPage() {
             </p>
           )}
         </div>
-        <ul className="space-y-1 text-xs text-gray-500">
+        <ul className="space-y-1 text-xs text-gray-500 dark:text-gray-400">
           <li>• Minimo 8 caratteri</li>
           <li>• Almeno un numero</li>
           <li>• Almeno un simbolo (es. !, @, #…)</li>

@@ -12,7 +12,7 @@ const TipoPage: NextPageWithLayout = function TipoPage() {
     return (
         <div className="space-y-10">
             <div className="space-y-1 text-center">
-                <h1 className="text-2xl font-semibold text-gray-900">Chi sei?</h1>
+                <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Chi sei?</h1>
             </div>
             <div className="flex gap-10 justify-center">
                 <UserIconBtn

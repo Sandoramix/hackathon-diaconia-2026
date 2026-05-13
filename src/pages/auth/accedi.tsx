@@ -67,21 +67,21 @@ const AccediPage: NextPageWithLayout = function AccediPage() {
               : <TutorIconBtn hideLabel/>
           }
 
-          <h1 className="text-xl font-semibold text-gray-900 text-center">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 text-center">
             Accedi all&apos;account
           </h1>
         </div>
       </div>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="username" className="text-sm font-medium text-gray-700">
+          <label htmlFor="username" className="text-sm font-medium text-gray-700 dark:text-gray-200">
             Username*
           </label>
           <input
             id="username"
             type="username"
             autoComplete="username"
-            className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#1e3eb0] focus:ring-2 focus:ring-[#1e3eb0]/20 disabled:opacity-50"
+            className="flex h-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-gray-100 outline-none transition focus:border-[#1e3eb0] focus:ring-2 focus:ring-[#1e3eb0]/20 disabled:opacity-50"
             {...form.register("username")}
           />
           {form.formState.errors.username && (
@@ -89,14 +89,14 @@ const AccediPage: NextPageWithLayout = function AccediPage() {
           )}
         </div>
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">
             Password*
           </label>
           <input
             id="password"
             type="password"
             autoComplete="current-password"
-            className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#1e3eb0] focus:ring-2 focus:ring-[#1e3eb0]/20 disabled:opacity-50"
+            className="flex h-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-gray-100 outline-none transition focus:border-[#1e3eb0] focus:ring-2 focus:ring-[#1e3eb0]/20 disabled:opacity-50"
             {...form.register("password")}
           />
           {form.formState.errors.password && (
@@ -115,7 +115,7 @@ const AccediPage: NextPageWithLayout = function AccediPage() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex h-14 w-full items-center justify-center rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-600 transition hover:bg-gray-50 focus-visible:outline-none"
+          className="flex h-14 w-full items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-600 dark:text-gray-200 transition hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-none"
         >
           Indietro
         </button>

@@ -59,11 +59,12 @@ model Structure {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  rules         Rule[]
-  users         User[]
-  events        Event[]
-  tasks         Task[]
-  conversations Conversation[]
+  rules              Rule[]
+  users              User[]
+  events             Event[]
+  tasks              Task[]
+  conversations      Conversation[]
+  activityNotes      StudentActivityNote[]
 
   @@index([name])
 }
@@ -104,13 +105,15 @@ model User {
   accounts Account[]
   sessions Session[]
 
-  eventParticipations  EventParticipant[]
-  taskSlotOccupations  TaskSlotOccupation[]
-  taskCompletions      TaskCompletion[]
-  feedbacks            Feedback[]
-  sentMessages         ChatMessage[]        @relation("ChatMessageSender")
-  studentConversations Conversation[]       @relation("ConversationStudent")
-  tutorConversations   Conversation[]       @relation("ConversationTutor")
+  eventParticipations   EventParticipant[]
+  taskSlotOccupations   TaskSlotOccupation[]
+  taskCompletions       TaskCompletion[]
+  feedbacks             Feedback[]
+  sentMessages          ChatMessage[]             @relation("ChatMessageSender")
+  studentConversations  Conversation[]            @relation("ConversationStudent")
+  tutorConversations    Conversation[]            @relation("ConversationTutor")
+  activityNotesGiven    StudentActivityNote[]     @relation("TutorActivityNotes")
+  activityNotesReceived StudentActivityNote[]     @relation("StudentActivityNotes")
 }
 
 // ─── Event ────────────────────────────────────────────────────────────────────
@@ -252,6 +255,23 @@ model Feedback {
   // PostgreSQL: NULL != NULL so these constraints only fire when the FK is set
   @@unique([userId, eventId])
   @@unique([userId, taskId])
+}
+
+// ─── Activity Notes ───────────────────────────────────────────────────────────
+
+model StudentActivityNote {
+  id          String    @id @default(cuid())
+  content     String    @db.Text
+  tutorId     String
+  tutor       User      @relation("TutorActivityNotes", fields: [tutorId], references: [id])
+  studentId   String
+  student     User      @relation("StudentActivityNotes", fields: [studentId], references: [id])
+  structureId String
+  structure   Structure @relation(fields: [structureId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([studentId, createdAt])
 }
 
 // ─── Chat ─────────────────────────────────────────────────────────────────────

@@ -4,16 +4,39 @@ import { useEffect, useState } from "react";
 import { getDashboardLayout } from "~/layouts/DashboardLayout";
 import type { NextPageWithLayout } from "../_app";
 import { api } from "~/utils/api";
-import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { Input } from "~/components/ui/input";
 import { Scheduler } from "calendarkit-pro";
 import type { CalendarEvent, ViewType } from "calendarkit-pro";
 import { format } from "date-fns";
 
+const TYPE_LABELS: Record<string, { label: string; color: string }> = {
+  event:         { label: "Evento",      color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" },
+  slot:          { label: "Slot task",   color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" },
+  task_complete: { label: "Completato",  color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" },
+  feedback:      { label: "Feedback",    color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300" },
+  note:          { label: "Nota tutor",  color: "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300" },
+};
+
+type Entry = { id: string; date: Date; type: string; title: string; description: string; meta?: Record<string, unknown> };
+
 const StoricoPage: NextPageWithLayout = function StoricoPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [cursor, setCursor] = useState<Date | undefined>(undefined);
+  const [allEntries, setAllEntries] = useState<Entry[]>([]);
   const [calView, setCalView] = useState<ViewType>("month");
   const [calDate, setCalDate] = useState(new Date());
 
@@ -24,37 +47,42 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
     }
   }, [status, session, router]);
 
-  const { data: history, isLoading } = api.task.myHistory.useQuery(undefined, {
+  const queryInput = {
+    type: typeFilter !== "all" ? (typeFilter as "event" | "slot" | "task_complete" | "feedback" | "note") : undefined,
+    dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+    dateTo: dateTo ? new Date(dateTo) : undefined,
+    cursor,
+    limit: 20,
+  };
+
+  const { data, isLoading, isFetching } = api.history.mine.useQuery(queryInput, {
     enabled: status === "authenticated",
   });
 
+  useEffect(() => {
+    setCursor(undefined);
+    setAllEntries([]);
+  }, [typeFilter, dateFrom, dateTo]);
+
+  useEffect(() => {
+    if (data?.entries) {
+      if (!cursor) {
+        setAllEntries(data.entries as Entry[]);
+      } else {
+        setAllEntries((prev) => [...prev, ...(data.entries as Entry[])]);
+      }
+    }
+  }, [data]);
+
   if (status !== "authenticated") return null;
 
-  const calEvents: CalendarEvent[] = [
-    ...(history?.pastEvents ?? []).map((e: { id: string; title: string; startDate: Date; endDate: Date; description: string | null; image: string | null; place: string | null; tags: { id: string; name: string }[] }) => ({
-      id: `event-${e.id}`,
-      title: e.title,
-      start: new Date(e.startDate),
-      end: new Date(e.endDate),
-      color: "#6b7280",
-      description: e.description ?? undefined,
-    })),
-    ...(history?.pastSlotOccupations ?? []).map((o: { id: string; slot: { date: Date; task: { id: string; title: string; image: string | null } } }) => ({
-      id: `slot-${o.id}`,
-      title: o.slot.task.title,
-      start: new Date(o.slot.date),
-      end: new Date(new Date(o.slot.date).getTime() + 60 * 60 * 1000),
-      color: "#7c3aed",
-    })),
-    ...(history?.completedTasks ?? []).map((c: { id: string; taskId: string; completedAt: Date; task: { id: string; title: string; description: string | null; image: string | null } }) => ({
-      id: `completed-${c.id}`,
-      title: `✓ ${c.task.title}`,
-      start: new Date(c.completedAt),
-      end: new Date(c.completedAt),
-      allDay: true,
-      color: "#059669",
-    })),
-  ];
+  const calEvents: CalendarEvent[] = allEntries.map((e) => ({
+    id: e.id,
+    title: e.title,
+    start: new Date(e.date),
+    end: new Date(new Date(e.date).getTime() + 30 * 60 * 1000),
+    color: e.type === "event" ? "#0081C6" : e.type === "slot" ? "#7c3aed" : e.type === "task_complete" ? "#059669" : "#d97706",
+  }));
 
   return (
     <div className="space-y-4">
@@ -65,106 +93,101 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
         </TabsList>
 
         {/* ── Lista ── */}
-        <TabsContent value="lista" className="space-y-6 pt-3">
-          {isLoading && <Skeleton className="h-20 w-full" />}
+        <TabsContent value="lista" className="space-y-3 pt-3">
+          <div className="flex flex-wrap gap-2">
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-36 dark:bg-gray-800 dark:border-gray-700">
+                <SelectValue placeholder="Tipo..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tutti</SelectItem>
+                <SelectItem value="event">Evento</SelectItem>
+                <SelectItem value="slot">Slot task</SelectItem>
+                <SelectItem value="task_complete">Completato</SelectItem>
+                <SelectItem value="feedback">Feedback</SelectItem>
+                <SelectItem value="note">Note tutor</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-36 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+            />
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-36 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+            />
+            {(typeFilter !== "all" || dateFrom || dateTo) && (
+              <Button variant="ghost" size="sm" onClick={() => { setTypeFilter("all"); setDateFrom(""); setDateTo(""); }}>
+                Reset
+              </Button>
+            )}
+          </div>
 
-          {/* Past Events */}
-          <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-              📅 Eventi completati ({history?.pastEvents.length ?? 0})
-            </h2>
-            <div className="space-y-2">
-              {history?.pastEvents.length === 0 && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">Nessun evento</p>
-              )}
-              {history?.pastEvents.map((e: { id: string; title: string; startDate: Date; endDate: Date; description: string | null; image: string | null; place: string | null; tags: { id: string; name: string }[] }) => (
-                <div key={e.id} className="flex items-start gap-3 rounded-xl border bg-white dark:bg-gray-800 p-3">
-                  {e.image && (
-                    <img src={e.image} alt={e.title} className="h-12 w-12 rounded-lg object-cover shrink-0" />
-                  )}
-                  <div>
-                    <p className="font-semibold text-sm">{e.title}</p>
-                    {e.place && <p className="text-xs text-gray-500 dark:text-gray-400">📍 {e.place}</p>}
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      {format(new Date(e.startDate), "d MMM yyyy")}
+          {isLoading && !allEntries.length && (
+            <>
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+            </>
+          )}
+
+          {allEntries.map((entry) => {
+            const t = TYPE_LABELS[entry.type] ?? { label: entry.type, color: "bg-gray-100 text-gray-700" };
+            return (
+              <div key={entry.id} className="flex gap-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${t.color}`}>
+                      {t.label}
+                    </span>
+                    <span className="text-xs text-gray-900 dark:text-gray-100 font-medium truncate">
+                      {entry.title}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{entry.description}</p>
+                  {entry.type === "note" && !!entry.meta?.tutorName && (
+                    <p className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">
+                      da {String(entry.meta.tutorName)}
                     </p>
-                    {e.tags.length > 0 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {e.tags.map((t: { id: string; name: string }) => (
-                          <Badge key={t.id} variant="secondary" className="text-xs">{t.name}</Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Past Slot Occupations */}
-          <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-              ✅ Slot occupati ({history?.pastSlotOccupations.length ?? 0})
-            </h2>
-            <div className="space-y-2">
-              {history?.pastSlotOccupations.length === 0 && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">Nessuno slot</p>
-              )}
-              {history?.pastSlotOccupations.map((o: { id: string; slot: { date: Date; task: { id: string; title: string; image: string | null } } }) => (
-                <div key={o.id} className="flex items-center gap-3 rounded-xl border bg-white dark:bg-gray-800 p-3">
-                  {o.slot.task.image && (
-                    <img src={o.slot.task.image} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
                   )}
-                  <div>
-                    <p className="font-semibold text-sm">{o.slot.task.title}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      {format(new Date(o.slot.date), "d MMM yyyy · HH:mm")}
-                    </p>
-                  </div>
-                  <Badge className="ml-auto bg-purple-100 text-purple-800 border-purple-200 text-xs shrink-0">
-                    Completato
-                  </Badge>
                 </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Manually Completed Tasks */}
-          {(history?.completedTasks.length ?? 0) > 0 && (
-            <section>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                🏁 Task completati manualmente ({history?.completedTasks.length})
-              </h2>
-              <div className="space-y-2">
-                {history?.completedTasks.map((c: { id: string; taskId: string; completedAt: Date; task: { id: string; title: string; description: string | null; image: string | null } }) => (
-                  <div key={c.id} className="flex items-center gap-3 rounded-xl border bg-white dark:bg-gray-800 p-3">
-                    {c.task.image && (
-                      <img src={c.task.image} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
-                    )}
-                    <div>
-                      <p className="font-semibold text-sm">{c.task.title}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
-                        Completato il {format(new Date(c.completedAt), "d MMM yyyy")}
-                      </p>
-                    </div>
-                    <Badge className="ml-auto bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700 text-xs shrink-0">
-                      ✓
-                    </Badge>
-                  </div>
-                ))}
+                <div className="shrink-0 text-right">
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">{format(new Date(entry.date), "d MMM yy")}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500">{format(new Date(entry.date), "HH:mm")}</p>
+                </div>
               </div>
-            </section>
+            );
+          })}
+
+          {!isLoading && allEntries.length === 0 && (
+            <p className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">Nessuna attività</p>
+          )}
+
+          {data?.nextCursor && (
+            <Button
+              variant="outline"
+              className="w-full dark:border-gray-700 dark:text-gray-300"
+              disabled={isFetching}
+              onClick={() => setCursor(data.nextCursor!)}
+            >
+              {isFetching ? "Caricamento..." : "Carica altro"}
+            </Button>
           )}
         </TabsContent>
 
         {/* ── Calendario ── */}
         <TabsContent value="calendario" className="pt-3">
-          <div className="mb-3 flex gap-3 text-xs text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-gray-400" /> Evento</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-purple-600" /> Slot task</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600" /> Completato</span>
+          <div className="mb-2 flex gap-3 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-[#0081C6]" /> Evento</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-purple-600" /> Slot</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-green-600" /> Completato</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> Feedback</span>
           </div>
-          <div className="h-[550px] rounded-xl overflow-hidden border">
+          <div className="h-[550px] rounded-xl overflow-hidden border dark:border-gray-700">
             <Scheduler
               events={calEvents}
               view={calView}
