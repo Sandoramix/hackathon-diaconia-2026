@@ -58,6 +58,7 @@ const studenteNav: NavItem[] = [
 interface DashboardLayoutProps {
   children: ReactNode;
   title?: string;
+  noPadding?: boolean;
 }
 
 function DarkToggle() {
@@ -73,7 +74,7 @@ function DarkToggle() {
   );
 }
 
-export default function DashboardLayout({ children, title }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, title, noPadding }: DashboardLayoutProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -118,9 +119,15 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
         </header>
 
         {/* Content */}
-        <main id="main-content" className="flex-1 overflow-y-auto pb-20">
-          <div className="mx-auto max-w-2xl px-4 py-4">{children}</div>
-        </main>
+        {noPadding ? (
+          <main id="main-content" className="flex flex-1 flex-col overflow-hidden" style={{ paddingBottom: "3.5rem" }}>
+            {children}
+          </main>
+        ) : (
+          <main id="main-content" className="flex-1 overflow-y-auto pb-20">
+            <div className="mx-auto max-w-2xl px-4 py-4">{children}</div>
+          </main>
+        )}
 
         {/* Bottom tab bar */}
         <nav
@@ -173,8 +180,8 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
   );
 }
 
-export function getDashboardLayout(title?: string) {
+export function getDashboardLayout(title?: string, opts?: { noPadding?: boolean }) {
   return function getLayout(page: ReactNode) {
-    return <DashboardLayout title={title}>{page}</DashboardLayout>;
+    return <DashboardLayout title={title} noPadding={opts?.noPadding}>{page}</DashboardLayout>;
   };
 }
