@@ -10,7 +10,7 @@ import type { NextPageWithLayout } from "../_app";
 import { api } from "~/utils/api";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Pencil, Trash2, Settings2, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Settings2, Loader2, Copy, Plus, Tag } from "lucide-react";
 import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
 import { Textarea } from "~/components/ui/textarea";
@@ -61,6 +61,8 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
   const [windowEnd, setWindowEnd] = useState("");
   const [slotDurationHours, setSlotDurationHours] = useState<number | "">("");
   const [occasionalDate, setOccasionalDate] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") void router.replace("/auth/tipo");
@@ -71,6 +73,9 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
 
   const utils = api.useUtils();
   const { data: tasks = [], isLoading } = api.task.list.useQuery(undefined, {
+    enabled: status === "authenticated",
+  });
+  const { data: existingTags = [] } = api.event.listTags.useQuery(undefined, {
     enabled: status === "authenticated",
   });
 
@@ -116,6 +121,8 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
     setWindowEnd("");
     setSlotDurationHours("");
     setOccasionalDate("");
+    setTags([]);
+    setTagInput("");
     form.reset({ type: "OCCASIONAL", hasFeedback: true, isCompletable: false });
   }
 
@@ -126,8 +133,30 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
     setWindowStart(task.windowStart ?? "");
     setWindowEnd(task.windowEnd ?? "");
     setSlotDurationHours(task.slotDurationHours ?? "");
+    setTags((task.tags as { name: string }[] ?? []).map((t) => t.name));
+    setTagInput("");
     form.reset({
       title: task.title,
+      description: task.description ?? "",
+      type: task.type,
+      hasFeedback: task.hasFeedback,
+      isCompletable: task.isCompletable ?? false,
+    });
+    setShowForm(true);
+  }
+
+  function openDuplicate(task: (typeof tasks)[0]) {
+    setEditId(null);
+    setImage(task.image ?? undefined);
+    setRecurrenceDays(task.recurrenceDays ?? []);
+    setWindowStart(task.windowStart ?? "");
+    setWindowEnd(task.windowEnd ?? "");
+    setSlotDurationHours(task.slotDurationHours ?? "");
+    setTags((task.tags as { name: string }[] ?? []).map((t) => t.name));
+    setTagInput("");
+    setOccasionalDate("");
+    form.reset({
+      title: task.title + " (copia)",
       description: task.description ?? "",
       type: task.type,
       hasFeedback: task.hasFeedback,
@@ -156,7 +185,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
     const sdh = typeof slotDurationHours === "number" ? slotDurationHours : undefined;
     if (editId) {
       updateMut.mutate({
-        id: editId, ...data, image: image ?? null,
+        id: editId, ...data, image: image ?? null, tagNames: tags,
         windowStart: ws ?? null, windowEnd: we ?? null, slotDurationHours: sdh ?? null,
       });
     } else {
@@ -167,6 +196,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
       createMut.mutate({
         ...data,
         image,
+        tagNames: tags,
         recurrenceDays,
         recurrenceWeeks,
         defaultMaxOccupants,
@@ -212,10 +242,20 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">{task.slots.length} slot</p>
+                {(task.tags as { id: string; name: string }[] | undefined)?.length ? (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {(task.tags as { id: string; name: string }[]).map(t => (
+                      <Badge key={t.id} variant="secondary" className="text-[10px]">{t.name}</Badge>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="flex gap-1 shrink-0">
                 <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setManagingId(task.id)} aria-label="Gestisci slot">
                   <Settings2 className="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openDuplicate(task)} aria-label="Duplica task">
+                  <Copy className="h-4 w-4" aria-hidden="true" />
                 </Button>
                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(task)} aria-label="Modifica task">
                   <Pencil className="h-4 w-4" aria-hidden="true" />
@@ -400,6 +440,70 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
                 )}
               </div>
             )}
+
+            <Separator />
+            {/* Tags */}
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                <Tag className="h-3.5 w-3.5" aria-hidden="true" />
+                Tag
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  placeholder="Aggiungi tag…"
+                  className="flex-1 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const v = tagInput.trim();
+                      if (v && !tags.includes(v)) setTags((p) => [...p, v]);
+                      setTagInput("");
+                    }
+                  }}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={() => {
+                  const v = tagInput.trim();
+                  if (v && !tags.includes(v)) setTags((p) => [...p, v]);
+                  setTagInput("");
+                }}>
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </div>
+              {/* Suggestions from existing tags */}
+              {tagInput && existingTags.filter(t => t.name.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t.name)).length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {existingTags
+                    .filter(t => t.name.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t.name))
+                    .slice(0, 8)
+                    .map(t => (
+                      <button key={t.id} type="button" onClick={() => { setTags(p => [...p, t.name]); setTagInput(""); }}
+                        className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+                        {t.name}
+                      </button>
+                    ))}
+                </div>
+              )}
+              {/* Show all tags when input is empty and focused */}
+              {!tagInput && existingTags.filter(t => !tags.includes(t.name)).length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {existingTags.filter(t => !tags.includes(t.name)).slice(0, 12).map(t => (
+                    <button key={t.id} type="button" onClick={() => setTags(p => [...p, t.name])}
+                      className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-1">
+                {tags.map(t => (
+                  <Badge key={t} variant="secondary" className="cursor-pointer text-xs" onClick={() => setTags(p => p.filter(x => x !== t))}>
+                    {t} ×
+                  </Badge>
+                ))}
+              </div>
+            </div>
 
             <Separator />
             <div className="flex items-center gap-2">

@@ -40,10 +40,10 @@ export const taskRouter = createTRPCRouter({
     return ctx.db.task.findMany({
       where: { structureId: user.structureId },
       include: {
+        tags: true,
         slots: {
           include: {
             _count: { select: { occupations: { where: { isActive: true } } } },
-            // Always include student's own active occupation (empty array for tutors/non-occupied)
             occupations: {
               where: { userId: user.id, isActive: true },
               take: 1,
@@ -66,6 +66,7 @@ export const taskRouter = createTRPCRouter({
       const task = await ctx.db.task.findFirst({
         where: { id: input.id, structureId: user.structureId },
         include: {
+          tags: true,
           slots: {
             include: {
               _count: { select: { occupations: { where: { isActive: true } } } },
@@ -94,6 +95,7 @@ export const taskRouter = createTRPCRouter({
         type: z.enum(["OCCASIONAL", "RECURRENT"]),
         hasFeedback: z.boolean(),
         isCompletable: z.boolean().default(false),
+        tagNames: z.array(z.string().min(1)).default([]),
         recurrenceDays: z.array(z.number().int().min(0).max(6)).default([]),
         recurrenceWeeks: z.number().int().min(1).max(52).default(4),
         defaultMaxOccupants: z.number().int().min(1).default(1),
@@ -111,7 +113,7 @@ export const taskRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const {
         slots, recurrenceDays, recurrenceWeeks, defaultMaxOccupants,
-        windowStart, windowEnd, slotDurationHours,
+        windowStart, windowEnd, slotDurationHours, tagNames,
         ...rest
       } = input;
 
@@ -161,8 +163,14 @@ export const taskRouter = createTRPCRouter({
           slotDurationHours: slotDurationHours ?? null,
           structureId: ctx.session.user.structureId,
           slots: { create: allSlots },
+          tags: {
+            connectOrCreate: tagNames.map((name) => ({
+              where: { name },
+              create: { name },
+            })),
+          },
         },
-        include: { slots: true },
+        include: { slots: true, tags: true },
       });
     }),
 
@@ -176,18 +184,33 @@ export const taskRouter = createTRPCRouter({
         type: z.enum(["OCCASIONAL", "RECURRENT"]).optional(),
         hasFeedback: z.boolean().optional(),
         isCompletable: z.boolean().optional(),
+        tagNames: z.array(z.string().min(1)).optional(),
         windowStart: z.string().optional().nullable(),
         windowEnd: z.string().optional().nullable(),
         slotDurationHours: z.number().positive().optional().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...data } = input;
+      const { id, tagNames, ...data } = input;
       const task = await ctx.db.task.findFirst({
         where: { id, structureId: ctx.session.user.structureId },
       });
       if (!task) throw new TRPCError({ code: "NOT_FOUND" });
-      return ctx.db.task.update({ where: { id }, data });
+      return ctx.db.task.update({
+        where: { id },
+        data: {
+          ...data,
+          ...(tagNames !== undefined && {
+            tags: {
+              set: [],
+              connectOrCreate: tagNames.map((name) => ({
+                where: { name },
+                create: { name },
+              })),
+            },
+          }),
+        },
+      });
     }),
 
   delete: tutorProcedure

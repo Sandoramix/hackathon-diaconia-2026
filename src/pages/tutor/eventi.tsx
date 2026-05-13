@@ -23,7 +23,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, MapPin, Users, Search, UserPlus, X, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, Users, Search, UserPlus, X, Loader2, Copy, Tag } from "lucide-react";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { cn } from "~/lib/utils";
 
@@ -35,7 +35,6 @@ const eventSchema = z.object({
   endDate: z.string().min(1, "Obbligatorio"),
   userLimit: z.string().optional(),
   hasFeedback: z.boolean(),
-  tagInput: z.string().optional(),
 });
 
 type EventForm = z.infer<typeof eventSchema>;
@@ -47,6 +46,7 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [managingId, setManagingId] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [image, setImage] = useState<string | undefined>(undefined);
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -65,6 +65,9 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
   }, [status, session, router]);
 
   const utils = api.useUtils();
+  const { data: existingTags = [] } = api.event.listTags.useQuery(undefined, {
+    enabled: status === "authenticated",
+  });
   const { data: events = [], isLoading } = api.event.list.useQuery(
     { upcoming: false },
     { enabled: status === "authenticated" },
@@ -104,6 +107,7 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
   function openCreate() {
     setEditId(null);
     setTags([]);
+    setTagInput("");
     form.reset({ hasFeedback: true });
     setShowForm(true);
   }
@@ -112,6 +116,7 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
     setEditId(event.id);
     const t = event.tags.map((t) => t.name);
     setTags(t);
+    setTagInput("");
     setImage(event.image ?? undefined);
     form.reset({
       title: event.title,
@@ -125,21 +130,32 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
     setShowForm(true);
   }
 
+  function openDuplicate(event: (typeof events)[0]) {
+    setEditId(null);
+    setTags(event.tags.map((t) => t.name));
+    setTagInput("");
+    setImage(event.image ?? undefined);
+    form.reset({
+      title: event.title + " (copia)",
+      description: event.description ?? "",
+      place: event.place ?? "",
+      startDate: "",
+      endDate: "",
+      userLimit: event.userLimit?.toString() ?? "",
+      hasFeedback: event.hasFeedback,
+    });
+    setShowForm(true);
+  }
+
   function closeForm() {
     setShowForm(false);
     setEditId(null);
     setTags([]);
+    setTagInput("");
     setImage(undefined);
     form.reset();
   }
 
-  function addTag() {
-    const val = form.getValues("tagInput")?.trim();
-    if (val && !tags.includes(val)) {
-      setTags((prev) => [...prev, val]);
-    }
-    form.setValue("tagInput", "");
-  }
 
   function onSubmit(data: EventForm) {
     const payload = {
@@ -239,6 +255,9 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
                   <Users className="h-3.5 w-3.5" aria-hidden="true" />
                   Partecipanti
                 </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openDuplicate(event)} aria-label="Duplica evento">
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                </Button>
                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(event)} aria-label="Modifica evento">
                   <Pencil className="h-4 w-4" aria-hidden="true" />
                 </Button>
@@ -304,31 +323,58 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
               <Input type="number" min={1} {...form.register("userLimit")} />
             </Field>
 
-            <div>
-              <Label className="text-xs text-gray-600">Tag</Label>
-              <div className="mt-1 flex gap-2">
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                <Tag className="h-3.5 w-3.5" aria-hidden="true" />
+                Tag
+              </Label>
+              <div className="flex gap-2">
                 <Input
-                  placeholder="Aggiungi tag..."
-                  {...form.register("tagInput")}
+                  placeholder="Aggiungi tag…"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  className="flex-1 text-sm"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      addTag();
+                      const v = tagInput.trim();
+                      if (v && !tags.includes(v)) setTags((p) => [...p, v]);
+                      setTagInput("");
                     }
                   }}
                 />
-                <Button type="button" variant="outline" size="sm" onClick={addTag}>
-                  +
+                <Button type="button" variant="outline" size="sm" onClick={() => {
+                  const v = tagInput.trim();
+                  if (v && !tags.includes(v)) setTags((p) => [...p, v]);
+                  setTagInput("");
+                }}>
+                  <Plus className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
-              <div className="mt-2 flex flex-wrap gap-1">
+              {/* Tag suggestions */}
+              {tagInput && existingTags.filter(t => t.name.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t.name)).length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {existingTags.filter(t => t.name.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t.name)).slice(0, 8).map(t => (
+                    <button key={t.id} type="button" onClick={() => { setTags(p => [...p, t.name]); setTagInput(""); }}
+                      className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!tagInput && existingTags.filter(t => !tags.includes(t.name)).length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {existingTags.filter(t => !tags.includes(t.name)).slice(0, 12).map(t => (
+                    <button key={t.id} type="button" onClick={() => setTags(p => [...p, t.name])}
+                      className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex flex-wrap gap-1">
                 {tags.map((t) => (
-                  <Badge
-                    key={t}
-                    variant="secondary"
-                    className="cursor-pointer text-xs"
-                    onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
-                  >
+                  <Badge key={t} variant="secondary" className="cursor-pointer text-xs" onClick={() => setTags((p) => p.filter((x) => x !== t))}>
                     {t} ×
                   </Badge>
                 ))}

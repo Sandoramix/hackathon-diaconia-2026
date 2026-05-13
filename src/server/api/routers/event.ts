@@ -30,6 +30,21 @@ async function resolveOrCreateTags(db: PrismaClient, tagNames: string[]) {
 }
 
 export const eventRouter = createTRPCRouter({
+  // List all tags for autocomplete (structure-scoped)
+  listTags: protectedProcedure.query(async ({ ctx }) => {
+    const structureId = ctx.session.user.structureId;
+    if (!structureId) return [];
+    return ctx.db.eventTag.findMany({
+      where: {
+        OR: [
+          { events: { some: { structureId } } },
+          { tasks: { some: { structureId } } },
+        ],
+      },
+      orderBy: { name: "asc" },
+    });
+  }),
+
   // Search tags (for autocomplete)
   searchTags: protectedProcedure
     .input(z.object({ query: z.string() }))

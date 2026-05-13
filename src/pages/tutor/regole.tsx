@@ -363,7 +363,7 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
                   </TabsTrigger>
                   <TabsTrigger value="lucide" className="flex-1 gap-1.5">
                     <Search className="h-4 w-4" aria-hidden="true" />
-                    Icone Lucide
+                    Libreria icone
                   </TabsTrigger>
                 </TabsList>
 
