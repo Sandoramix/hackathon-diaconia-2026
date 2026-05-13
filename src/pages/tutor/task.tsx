@@ -10,6 +10,7 @@ import type { NextPageWithLayout } from "../_app";
 import { api } from "~/utils/api";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { Pencil, Trash2, Settings2 } from "lucide-react";
 import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
 import { Textarea } from "~/components/ui/textarea";
@@ -212,9 +213,15 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
                 <p className="text-xs text-gray-500 mt-1">{task.slots.length} slot</p>
               </div>
               <div className="flex gap-1 shrink-0">
-                <Button size="sm" variant="outline" onClick={() => setManagingId(task.id)}>Slot</Button>
-                <Button size="sm" variant="ghost" onClick={() => openEdit(task)}>✏️</Button>
-                <Button size="sm" variant="ghost" className="text-red-600" onClick={() => deleteMut.mutate({ id: task.id })}>🗑️</Button>
+                <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setManagingId(task.id)} aria-label="Gestisci slot">
+                  <Settings2 className="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(task)} aria-label="Modifica task">
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400" onClick={() => deleteMut.mutate({ id: task.id })} aria-label="Elimina task">
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -650,12 +657,13 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
                             </p>
                           </div>
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
-                            className="text-red-600"
+                            className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400"
                             onClick={() => deleteSlotMut.mutate({ slotId: slot.id })}
+                            aria-label="Elimina slot"
                           >
-                            🗑️
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         </div>
                         {/* Assigned students */}

@@ -8,7 +8,8 @@ import { api } from "~/utils/api";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Button } from "~/components/ui/button";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Users, GraduationCap, CalendarDays, CheckSquare, Star, ClipboardList } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 const TutorDashboard: NextPageWithLayout = function TutorDashboard() {
   const { data: session, status } = useSession();
@@ -48,20 +49,20 @@ const TutorDashboard: NextPageWithLayout = function TutorDashboard() {
           </span>
         </p>
         <div className="flex gap-2">
-          <Button asChild size="sm" variant="outline">
-            <Link href="/tutor/feedback">⭐ Feedback</Link>
+          <Button asChild size="sm" variant="outline" className="gap-1.5">
+            <Link href="/tutor/feedback"><Star className="h-3.5 w-3.5" aria-hidden="true" />Feedback</Link>
           </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href="/tutor/regole">📋 Regole</Link>
+          <Button asChild size="sm" variant="outline" className="gap-1.5">
+            <Link href="/tutor/eventi"><CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />Eventi</Link>
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Studenti" value={studentCount} loading={users.isLoading} icon="👤" />
-        <StatCard label="Tutor" value={tutorCount} loading={users.isLoading} icon="🎓" />
-        <StatCard label="Eventi futuri" value={upcomingEvents} loading={events.isLoading} icon="📅" />
-        <StatCard label="Task attivi" value={tasks.data?.length ?? 0} loading={tasks.isLoading} icon="✅" />
+        <StatCard label="Studenti" value={studentCount} loading={users.isLoading} Icon={Users} />
+        <StatCard label="Tutor" value={tutorCount} loading={users.isLoading} Icon={GraduationCap} />
+        <StatCard label="Eventi futuri" value={upcomingEvents} loading={events.isLoading} Icon={CalendarDays} />
+        <StatCard label="Task attivi" value={tasks.data?.length ?? 0} loading={tasks.isLoading} Icon={CheckSquare} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -122,25 +123,27 @@ function StatCard({
   label,
   value,
   loading,
-  icon,
+  Icon,
 }: {
   label: string;
   value: number;
   loading: boolean;
-  icon: string;
+  Icon: LucideIcon;
 }) {
   return (
     <Card>
       <CardContent className="pt-4">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{icon}</span>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20">
+            <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          </div>
           <div>
             {loading ? (
               <Skeleton className="h-6 w-12" />
             ) : (
-              <p className="text-2xl font-bold">{value}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
             )}
-            <p className="text-xs text-gray-500">{label}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
           </div>
         </div>
       </CardContent>

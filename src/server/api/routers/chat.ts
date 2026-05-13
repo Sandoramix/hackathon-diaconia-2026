@@ -2,14 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
-function assertInStructure(userStructureId: string | null, structureId: string) {
-  if (!userStructureId || userStructureId !== structureId) {
-    throw new TRPCError({ code: "FORBIDDEN" });
-  }
-}
-
 export const chatRouter = createTRPCRouter({
-  // Get or create a conversation between student and a tutor
   getOrCreate: protectedProcedure
     .input(z.object({ withUserId: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -26,11 +19,7 @@ export const chatRouter = createTRPCRouter({
 
       return ctx.db.conversation.upsert({
         where: { studentId_tutorId: { studentId, tutorId } },
-        create: {
-          studentId,
-          tutorId,
-          structureId: me.structureId,
-        },
+        create: { studentId, tutorId, structureId: me.structureId },
         update: {},
         include: {
           student: { select: { id: true, name: true, username: true } },
@@ -39,7 +28,6 @@ export const chatRouter = createTRPCRouter({
       });
     }),
 
-  // List conversations for current user
   myConversations: protectedProcedure.query(async ({ ctx }) => {
     const me = ctx.session.user;
     if (!me.structureId) throw new TRPCError({ code: "FORBIDDEN" });
@@ -55,12 +43,31 @@ export const chatRouter = createTRPCRouter({
         student: { select: { id: true, name: true, username: true } },
         tutor: { select: { id: true, name: true, username: true } },
         messages: { orderBy: { createdAt: "desc" }, take: 1 },
+        _count: {
+          select: {
+            messages: {
+              where: { senderId: { not: me.id }, readAt: null },
+            },
+          },
+        },
       },
       orderBy: { updatedAt: "desc" },
     });
   }),
 
-  // Get messages for a conversation
+  hasUnread: protectedProcedure.query(async ({ ctx }) => {
+    const me = ctx.session.user;
+    if (!me.structureId || me.role !== "TUTOR") return false;
+    const count = await ctx.db.chatMessage.count({
+      where: {
+        conversation: { tutorId: me.id, structureId: me.structureId },
+        senderId: { not: me.id },
+        readAt: null,
+      },
+    });
+    return count > 0;
+  }),
+
   messages: protectedProcedure
     .input(
       z.object({
@@ -94,9 +101,8 @@ export const chatRouter = createTRPCRouter({
 
       return {
         messages: messages.reverse(),
-        nextCursor: messages.length === input.limit
-          ? messages[0]!.createdAt.toISOString()
-          : null,
+        nextCursor:
+          messages.length === input.limit ? messages[0]!.createdAt.toISOString() : null,
       };
     }),
 
@@ -117,11 +123,7 @@ export const chatRouter = createTRPCRouter({
 
       const [message] = await ctx.db.$transaction([
         ctx.db.chatMessage.create({
-          data: {
-            conversationId: input.conversationId,
-            senderId: me.id,
-            text: input.text,
-          },
+          data: { conversationId: input.conversationId, senderId: me.id, text: input.text },
           include: { sender: { select: { id: true, name: true, username: true } } },
         }),
         ctx.db.conversation.update({
@@ -133,7 +135,6 @@ export const chatRouter = createTRPCRouter({
       return message;
     }),
 
-  // Mark all unread messages in a conversation as read
   markRead: protectedProcedure
     .input(z.object({ conversationId: z.string() }))
     .mutation(async ({ ctx, input }) => {

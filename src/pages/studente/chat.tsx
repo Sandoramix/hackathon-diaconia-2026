@@ -9,13 +9,20 @@ import { Input } from "~/components/ui/input";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { cn } from "~/lib/utils";
 import { toast } from "sonner";
+import { ArrowLeft, Search, Send, Plus } from "lucide-react";
+import { format } from "date-fns";
+
+type MobileView = "list" | "chat";
 
 const StudenteChatPage: NextPageWithLayout = function StudenteChatPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [search, setSearch] = useState("");
+  const [mobileView, setMobileView] = useState<MobileView>("list");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") void router.replace("/auth/tipo");
@@ -31,8 +38,19 @@ const StudenteChatPage: NextPageWithLayout = function StudenteChatPage() {
     { enabled: status === "authenticated", refetchInterval: 5000 },
   );
 
-  const { data: tutors = [] } = api.user.listTutors.useQuery(undefined, {
+  const { data: allTutors = [] } = api.user.listTutors.useQuery(undefined, {
     enabled: status === "authenticated",
+  });
+
+  const getOrCreateMut = api.chat.getOrCreate.useMutation({
+    onSuccess: (c) => {
+      setActiveId(c.id);
+      void utils.chat.myConversations.invalidate();
+      void refetchMsgs();
+      setMobileView("chat");
+      setSearch("");
+    },
+    onError: (e) => toast.error(e.message),
   });
 
   const { data: msgs, refetch: refetchMsgs } = api.chat.messages.useQuery(
@@ -44,20 +62,14 @@ const StudenteChatPage: NextPageWithLayout = function StudenteChatPage() {
     onSuccess: () => {
       setText("");
       void refetchMsgs();
+      void utils.chat.myConversations.invalidate();
     },
     onError: (e) => toast.error(e.message),
   });
 
   const markReadMut = api.chat.markRead.useMutation();
 
-  const getOrCreateMut = api.chat.getOrCreate.useMutation({
-    onSuccess: (c) => {
-      setActiveId(c.id);
-      void utils.chat.myConversations.invalidate();
-    },
-    onError: (e) => toast.error(e.message),
-  });
-
+  // Auto-select first conversation on load
   useEffect(() => {
     if (!activeId && convos.length > 0 && convos[0]) {
       setActiveId(convos[0].id);
@@ -73,71 +85,163 @@ const StudenteChatPage: NextPageWithLayout = function StudenteChatPage() {
 
   const me = session.user;
   const existingTutorIds = new Set(convos.map((c) => c.tutorId));
-  const newTutors = tutors.filter((t) => !existingTutorIds.has(t.id));
+  const lowerSearch = search.toLowerCase();
+
+  const filteredConvos = convos.filter((c) => {
+    const name = (c.tutor.name ?? c.tutor.username).toLowerCase();
+    return name.includes(lowerSearch);
+  });
+
+  const filteredNewTutors = allTutors
+    .filter((t) => !existingTutorIds.has(t.id))
+    .filter((t) => {
+      const name = (t.name ?? t.username).toLowerCase();
+      return name.includes(lowerSearch);
+    });
+
+  const activeConvo = convos.find((c) => c.id === activeId);
+  const activeOther = activeConvo?.tutor;
+
+  function selectConvo(id: string) {
+    setActiveId(id);
+    setMobileView("chat");
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }
+
+  function sendMessage() {
+    if (!activeId || !text.trim()) return;
+    sendMut.mutate({ conversationId: activeId, text: text.trim() });
+  }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-56 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden dark:bg-gray-900">
-        <div className="p-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 border-b dark:border-gray-700 shrink-0">
-          Conversazioni
+    <div className="flex h-[calc(100svh-7.5rem)] overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+      {/* ── Sidebar ── */}
+      <aside
+        className={cn(
+          "flex w-full flex-col border-r border-gray-200 dark:border-gray-700 md:flex md:w-64",
+          mobileView === "list" ? "flex" : "hidden",
+        )}
+      >
+        {/* Search */}
+        <div className="border-b border-gray-200 p-3 dark:border-gray-700">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+            <Input
+              placeholder="Cerca tutor…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 text-sm"
+              aria-label="Cerca tutor"
+            />
+          </div>
         </div>
+
         <div className="flex-1 overflow-y-auto">
-          {convosLoading && <p className="p-3 text-sm text-gray-500 dark:text-gray-400">Caricamento...</p>}
-          {convos.map((c) => {
-            const other = c.tutor;
-            const lastMsg = c.messages[0];
-            return (
-              <button
-                key={c.id}
-                onClick={() => setActiveId(c.id)}
-                className={cn(
-                  "flex w-full items-center gap-2 p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors",
-                  activeId === c.id && "bg-blue-50 dark:bg-blue-900/30",
-                )}
-              >
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarFallback className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs">
-                    {(other.name ?? other.username).slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{other.name ?? other.username}</p>
-                  {lastMsg && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{lastMsg.text}</p>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-          {!convosLoading && convos.length === 0 && (
-            <p className="p-3 text-xs text-gray-400 dark:text-gray-500">Nessuna conversazione</p>
+          {convosLoading && (
+            <p className="p-3 text-sm text-gray-500 dark:text-gray-400">Caricamento...</p>
+          )}
+
+          {filteredConvos.length > 0 && (
+            <div>
+              <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                Conversazioni
+              </p>
+              {filteredConvos.map((c) => {
+                const lastMsg = c.messages[0];
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => selectConvo(c.id)}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-700",
+                      activeId === c.id && "bg-blue-50 dark:bg-blue-900/30",
+                    )}
+                    aria-current={activeId === c.id ? "true" : undefined}
+                  >
+                    <Avatar className="h-9 w-9 shrink-0">
+                      <AvatarFallback className="bg-indigo-100 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                        {(c.tutor.name ?? c.tutor.username).slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {c.tutor.name ?? c.tutor.username}
+                      </p>
+                      {lastMsg && (
+                        <p className="truncate text-xs text-gray-400 dark:text-gray-500">
+                          {lastMsg.text}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {filteredNewTutors.length > 0 && (
+            <div className="mt-1 border-t border-gray-100 dark:border-gray-700/60">
+              <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                Nuovo
+              </p>
+              {filteredNewTutors.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => getOrCreateMut.mutate({ withUserId: t.id })}
+                  disabled={getOrCreateMut.isPending}
+                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                    <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                  </div>
+                  <p className="truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t.name ?? t.username}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!convosLoading && filteredConvos.length === 0 && filteredNewTutors.length === 0 && (
+            <p className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+              {search ? "Nessun risultato" : "Nessun tutor disponibile"}
+            </p>
           )}
         </div>
-
-        {/* Start new conversation */}
-        {newTutors.length > 0 && (
-          <div className="border-t p-2 shrink-0">
-            <p className="mb-1.5 text-xs text-gray-400 dark:text-gray-500 uppercase font-semibold px-1">Nuovo</p>
-            {newTutors.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => getOrCreateMut.mutate({ withUserId: t.id })}
-                disabled={getOrCreateMut.isPending}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <span className="text-gray-400 dark:text-gray-500">+</span>
-                <span className="truncate">{t.name ?? t.username}</span>
-              </button>
-            ))}
-          </div>
-        )}
       </aside>
 
-      {/* Message area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {activeId ? (
+      {/* ── Message area ── */}
+      <div
+        className={cn(
+          "flex flex-1 flex-col overflow-hidden",
+          mobileView === "chat" ? "flex" : "hidden md:flex",
+        )}
+      >
+        {activeId && activeOther ? (
           <>
+            {/* Header with back on mobile */}
+            <div className="flex items-center gap-3 border-b border-gray-200 px-3 py-2.5 dark:border-gray-700">
+              <button
+                onClick={() => setMobileView("list")}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 md:hidden"
+                aria-label="Torna alla lista"
+              >
+                <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+              </button>
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarFallback className="bg-indigo-100 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                  {(activeOther.name ?? activeOther.username).slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">
+                  {activeOther.name ?? activeOther.username}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Tutor</p>
+              </div>
+            </div>
+
+            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {msgs?.messages.map((msg) => {
                 const isMe = msg.senderId === me.id;
@@ -145,15 +249,20 @@ const StudenteChatPage: NextPageWithLayout = function StudenteChatPage() {
                   <div key={msg.id} className={cn("flex", isMe ? "justify-end" : "justify-start")}>
                     <div
                       className={cn(
-                        "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
+                        "max-w-[78%] rounded-2xl px-3.5 py-2 text-sm",
                         isMe
                           ? "bg-blue-600 text-white rounded-br-sm"
-                          : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm",
+                          : "bg-gray-100 text-gray-900 rounded-bl-sm dark:bg-gray-700 dark:text-gray-100",
                       )}
                     >
-                      <p>{msg.text}</p>
-                      <p className={cn("mt-0.5 text-right text-[10px]", isMe ? "text-blue-200" : "text-gray-400 dark:text-gray-500")}>
-                        {new Date(msg.createdAt).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
+                      <p className="leading-snug">{msg.text}</p>
+                      <p
+                        className={cn(
+                          "mt-0.5 text-right text-[10px]",
+                          isMe ? "text-blue-200" : "text-gray-400 dark:text-gray-500",
+                        )}
+                      >
+                        {format(new Date(msg.createdAt), "HH:mm")}
                       </p>
                     </div>
                   </div>
@@ -161,31 +270,37 @@ const StudenteChatPage: NextPageWithLayout = function StudenteChatPage() {
               })}
               <div ref={bottomRef} />
             </div>
-            <div className="border-t border-gray-200 dark:border-gray-700 p-3 flex gap-2 shrink-0">
+
+            {/* Input */}
+            <div className="flex gap-2 border-t border-gray-200 p-3 dark:border-gray-700">
               <Input
+                ref={inputRef}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Scrivi un messaggio..."
+                placeholder="Scrivi un messaggio…"
+                className="flex-1"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey && text.trim()) {
                     e.preventDefault();
-                    sendMut.mutate({ conversationId: activeId, text: text.trim() });
+                    sendMessage();
                   }
                 }}
+                aria-label="Messaggio"
               />
               <Button
+                size="icon"
                 disabled={!text.trim() || sendMut.isPending}
-                onClick={() => sendMut.mutate({ conversationId: activeId, text: text.trim() })}
+                onClick={sendMessage}
+                aria-label="Invia messaggio"
               >
-                Invia
+                <Send className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </>
         ) : (
-          <div className="flex flex-1 items-center justify-center text-sm text-gray-400 dark:text-gray-500">
-            {tutors.length === 0
-              ? "Nessun tutor disponibile"
-              : "Seleziona o avvia una conversazione"}
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500">
+            <Search className="h-8 w-8 opacity-40" aria-hidden="true" />
+            <p className="text-sm">Seleziona una conversazione</p>
           </div>
         )}
       </div>

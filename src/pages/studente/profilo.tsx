@@ -7,13 +7,17 @@ import type { NextPageWithLayout } from "../_app";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
-import { useTheme } from "~/lib/useTheme";
-import { Sun, Moon } from "lucide-react";
+import { ClipboardList, Star, BookOpen, ChevronRight, LogOut } from "lucide-react";
+
+const menuItems = [
+  { href: "/studente/storico",  label: "Storico attività",  Icon: ClipboardList },
+  { href: "/studente/feedback", label: "I miei feedback",   Icon: Star },
+  { href: "/studente/regole",   label: "Regole struttura",  Icon: BookOpen },
+];
 
 const StudenteProfiloPage: NextPageWithLayout = function StudenteProfiloPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { isDark, toggle } = useTheme();
 
   useEffect(() => {
     if (status === "unauthenticated") void router.replace("/auth/tipo");
@@ -28,18 +32,12 @@ const StudenteProfiloPage: NextPageWithLayout = function StudenteProfiloPage() {
     .slice(0, 2)
     .toUpperCase();
 
-  const menuItems = [
-    { href: "/studente/storico",  label: "Storico attività",  icon: "📋" },
-    { href: "/studente/feedback", label: "I miei feedback",   icon: "⭐" },
-    { href: "/studente/regole",   label: "Regole struttura",  icon: "📖" },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Avatar + info */}
-      <div className="flex items-center gap-4 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-4">
+      <div className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <Avatar className="h-16 w-16">
-          <AvatarFallback className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xl font-bold">
+          <AvatarFallback className="bg-blue-100 text-xl font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
             {initials}
           </AvatarFallback>
         </Avatar>
@@ -47,49 +45,38 @@ const StudenteProfiloPage: NextPageWithLayout = function StudenteProfiloPage() {
           <p className="font-semibold text-gray-900 dark:text-gray-100">
             {session.user.name ?? session.user.username}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">@{session.user.username}</p>
-          <span className="mt-1 inline-block rounded-full bg-blue-50 dark:bg-indigo-900/30 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+          <p className="font-mono text-sm text-gray-500 dark:text-gray-400">
+            @{session.user.username}
+          </p>
+          <span className="mt-1 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
             Studente
           </span>
         </div>
       </div>
 
       {/* Menu items */}
-      <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:divide-gray-700">
         {menuItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className="flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
           >
-            <span className="text-base">{item.icon}</span>
+            <item.Icon className="h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" aria-hidden="true" />
             <span className="flex-1">{item.label}</span>
-            <span className="text-gray-300">›</span>
+            <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
           </Link>
         ))}
-      </div>
-
-      {/* Dark mode toggle */}
-      <div className="rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <button
-          onClick={toggle}
-          className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >
-          {isDark ? <Sun className="h-5 w-5 shrink-0" /> : <Moon className="h-5 w-5 shrink-0" />}
-          <span className="flex-1">{isDark ? "Modalità chiara" : "Modalità scura"}</span>
-          <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-            {isDark ? "ON" : "OFF"}
-          </span>
-        </button>
       </div>
 
       <Separator className="dark:bg-gray-700" />
 
       <Button
         variant="outline"
-        className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+        className="w-full gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
         onClick={() => void signOut({ callbackUrl: "/auth/tipo" })}
       >
+        <LogOut className="h-4 w-4" aria-hidden="true" />
         Esci dall&apos;account
       </Button>
     </div>
