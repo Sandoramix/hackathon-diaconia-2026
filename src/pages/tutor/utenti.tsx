@@ -35,7 +35,7 @@ import { toast } from "sonner";
 import {
   Eye, EyeOff, UserPlus, Users, History, Pencil, UserX, UserCheck,
   Download, Printer, FileSpreadsheet, Search, GraduationCap, User,
-  Mail, StickyNote, Phone, Key, Info, Plus,
+  Mail, StickyNote, Phone, Key, Info, Plus, Loader2,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 
@@ -671,8 +671,8 @@ const UtentiPage: NextPageWithLayout = function UtentiPage() {
                 Annulla
               </Button>
               <Button type="submit" disabled={createMut.isPending} className="gap-1.5">
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Crea
+                {createMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
+                {createMut.isPending ? "Creando…" : "Crea"}
               </Button>
             </div>
           </form>
@@ -725,7 +725,7 @@ const UtentiPage: NextPageWithLayout = function UtentiPage() {
                 Annulla
               </Button>
               <Button type="submit" disabled={bulkMut.isPending} className="gap-1.5">
-                <UserPlus className="h-4 w-4" aria-hidden="true" />
+                {bulkMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <UserPlus className="h-4 w-4" aria-hidden="true" />}
                 {bulkMut.isPending ? "Creando…" : "Crea"}
               </Button>
             </div>

@@ -10,7 +10,7 @@ import type { NextPageWithLayout } from "../_app";
 import { api } from "~/utils/api";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Pencil, Trash2, Settings2 } from "lucide-react";
+import { Pencil, Trash2, Settings2, Loader2 } from "lucide-react";
 import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
 import { Textarea } from "~/components/ui/textarea";
@@ -220,7 +220,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(task)} aria-label="Modifica task">
                   <Pencil className="h-4 w-4" aria-hidden="true" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400" onClick={() => deleteMut.mutate({ id: task.id })} aria-label="Elimina task">
+                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400" onClick={() => deleteMut.mutate({ id: task.id })} disabled={deleteMut.isPending} aria-label="Elimina task">
                   <Trash2 className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
@@ -424,8 +424,9 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={closeForm}>Annulla</Button>
-              <Button type="submit" disabled={createMut.isPending || updateMut.isPending}>
-                {editId ? "Salva" : "Crea"}
+              <Button type="submit" disabled={createMut.isPending || updateMut.isPending} className="gap-1.5">
+                {(createMut.isPending || updateMut.isPending) && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                {(createMut.isPending || updateMut.isPending) ? "Salvataggio…" : editId ? "Salva" : "Crea"}
               </Button>
             </div>
           </form>

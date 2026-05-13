@@ -361,7 +361,7 @@ const ChatPage: NextPageWithLayout = function ChatPage() {
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && text.trim()) { e.preventDefault(); sendMessage(); } }}
                 aria-label="Messaggio" />
               <Button size="icon" disabled={!text.trim() || sendMut.isPending} onClick={sendMessage} aria-label="Invia">
-                <Send className="h-4 w-4" aria-hidden="true" />
+                {sendMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
               </Button>
             </div>
           </>

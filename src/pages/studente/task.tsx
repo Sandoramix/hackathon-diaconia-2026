@@ -26,7 +26,7 @@ import { it } from "date-fns/locale";
 import { cn } from "~/lib/utils";
 import {
   ChevronLeft, ChevronRight, CalendarDays, CheckCircle2, Clock,
-  ListChecks, Search, BookmarkCheck, RefreshCw,
+  ListChecks, Search, BookmarkCheck, RefreshCw, Loader2,
 } from "lucide-react";
 import { DateStrip } from "./eventi";
 
@@ -610,9 +610,10 @@ function TaskDetailDialog({ taskId, onClose }: { taskId: string; onClose: () => 
                               variant={isOccupied ? "outline" : "default"}
                               disabled={isFull || toggleMut.isPending}
                               onClick={() => toggleMut.mutate({ slotId: slot.id, occupy: !isOccupied })}
-                              className={cn("min-w-[90px]", isOccupied && "border-green-300 text-green-700 dark:border-green-700 dark:text-green-300")}
+                              className={cn("min-w-22.5 gap-1.5", isOccupied && "border-green-300 text-green-700 dark:border-green-700 dark:text-green-300")}
                             >
-                              {isFull ? "Pieno" : isOccupied ? "Cancella" : "Iscriviti"}
+                              {toggleMut.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+                              {toggleMut.isPending ? "…" : isFull ? "Pieno" : isOccupied ? "Cancella" : "Iscriviti"}
                             </Button>
                           ) : (
                             isOccupied && (

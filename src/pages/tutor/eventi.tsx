@@ -23,7 +23,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, MapPin, Users, Search, UserPlus, X } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, Users, Search, UserPlus, X, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { cn } from "~/lib/utils";
 
@@ -247,6 +247,7 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
                   variant="ghost"
                   className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400"
                   onClick={() => deleteMut.mutate({ id: event.id })}
+                  disabled={deleteMut.isPending}
                   aria-label="Elimina evento"
                 >
                   <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -353,8 +354,10 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
               <Button
                 type="submit"
                 disabled={createMut.isPending || updateMut.isPending}
+                className="gap-1.5"
               >
-                {editId ? "Salva" : "Crea"}
+                {(createMut.isPending || updateMut.isPending) && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                {(createMut.isPending || updateMut.isPending) ? "Salvataggio…" : editId ? "Salva" : "Crea"}
               </Button>
             </div>
           </form>
