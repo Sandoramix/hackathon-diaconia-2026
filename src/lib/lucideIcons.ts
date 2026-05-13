@@ -134,21 +134,21 @@ export const ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
   ICON_LIST.map(({ name, Icon }) => [name, Icon]),
 );
 
-export const ICON_COLORS: { label: string; value: string; css: string }[] = [
-  { label: "Predefinito", value: "",               css: "#6b7280" },
-  { label: "Rosso",       value: "text-red-600",   css: "#dc2626" },
-  { label: "Arancione",   value: "text-orange-500",css: "#f97316" },
-  { label: "Giallo",      value: "text-yellow-500",css: "#eab308" },
-  { label: "Verde",       value: "text-green-600", css: "#16a34a" },
-  { label: "Azzurro",     value: "text-sky-500",   css: "#0ea5e9" },
-  { label: "Blu",         value: "text-blue-600",  css: "#2563eb" },
-  { label: "Viola",       value: "text-purple-600",css: "#9333ea" },
-  { label: "Rosa",        value: "text-pink-500",  css: "#ec4899" },
+export const ICON_COLORS: { label: string; value: string; preview: string }[] = [
+  { label: "Predefinito", value: "",               preview: "text-gray-500" },
+  { label: "Rosso",       value: "text-red-600",   preview: "text-red-600" },
+  { label: "Arancione",   value: "text-orange-500",preview: "text-orange-500" },
+  { label: "Giallo",      value: "text-yellow-500",preview: "text-yellow-500" },
+  { label: "Verde",       value: "text-green-600", preview: "text-green-600" },
+  { label: "Azzurro",     value: "text-sky-500",   preview: "text-sky-500" },
+  { label: "Blu",         value: "text-blue-600",  preview: "text-blue-600" },
+  { label: "Viola",       value: "text-purple-600",preview: "text-purple-600" },
+  { label: "Rosa",        value: "text-pink-500",  preview: "text-pink-500" },
 ];
 
-/** Map stored Tailwind class value → CSS color for inline styles */
-export const COLOR_CSS_MAP: Record<string, string> = Object.fromEntries(
-  ICON_COLORS.map((c) => [c.value, c.css]),
+/** Map stored Tailwind class value → preview Tailwind class */
+export const COLOR_PREVIEW_MAP: Record<string, string> = Object.fromEntries(
+  ICON_COLORS.map((c) => [c.value, c.preview]),
 );
 
 /** Parse icon stored as "lucide:Name:colorClass" or raw emoji */
