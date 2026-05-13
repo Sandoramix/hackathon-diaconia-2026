@@ -83,7 +83,7 @@ const UtentiPage: NextPageWithLayout = function UtentiPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
   const [editUser, setEditUser] = useState<string | null>(null);
-  const [showDeleted, setShowDeleted] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") void router.replace("/auth/tipo");
@@ -153,9 +153,9 @@ const UtentiPage: NextPageWithLayout = function UtentiPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Label className="flex items-center gap-2 text-sm">
-            <Switch checked={showDeleted} onCheckedChange={setShowDeleted} />
-            Mostra eliminati
+          <Label className="flex cursor-pointer items-center gap-2 text-sm" htmlFor="toggle-deleted">
+            <Switch id="toggle-deleted" checked={showDeleted} onCheckedChange={setShowDeleted} />
+            Mostra disattivati
           </Label>
         </div>
         <div className="flex gap-2">
@@ -346,6 +346,11 @@ function UserTable({
   if (loading) return <p className="py-8 text-center text-sm text-gray-500">Caricamento...</p>;
   if (!users.length) return <p className="py-8 text-center text-sm text-gray-500">Nessun utente</p>;
 
+  const sorted = [...users].sort((a, b) => {
+    if (!!a.deletedAt === !!b.deletedAt) return 0;
+    return a.deletedAt ? 1 : -1;
+  });
+
   return (
     <Table>
       <TableHeader>
@@ -358,7 +363,7 @@ function UserTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {users.map((u) => (
+        {sorted.map((u) => (
           <TableRow key={u.id} className={u.deletedAt ? "opacity-50" : ""}>
             <TableCell className="font-mono text-sm">{u.username}</TableCell>
             <TableCell>{u.name ?? "—"}</TableCell>

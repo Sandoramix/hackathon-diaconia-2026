@@ -58,6 +58,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
   const [windowStart, setWindowStart] = useState("");
   const [windowEnd, setWindowEnd] = useState("");
   const [slotDurationHours, setSlotDurationHours] = useState<number | "">("");
+  const [occasionalDate, setOccasionalDate] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") void router.replace("/auth/tipo");
@@ -112,6 +113,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
     setWindowStart("");
     setWindowEnd("");
     setSlotDurationHours("");
+    setOccasionalDate("");
     form.reset({ type: "OCCASIONAL", hasFeedback: true, isCompletable: false });
   }
 
@@ -156,6 +158,10 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
         windowStart: ws ?? null, windowEnd: we ?? null, slotDurationHours: sdh ?? null,
       });
     } else {
+      const initialSlots =
+        data.type === "OCCASIONAL" && !data.isCompletable && occasionalDate
+          ? [{ date: new Date(occasionalDate), maxOccupants: defaultMaxOccupants }]
+          : [];
       createMut.mutate({
         ...data,
         image,
@@ -165,7 +171,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
         windowStart: ws,
         windowEnd: we,
         slotDurationHours: sdh,
-        slots: [],
+        slots: initialSlots,
       });
     }
   }
@@ -263,6 +269,30 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
                 )}
               />
             </Field>
+
+            {form.watch("type") === "OCCASIONAL" && !form.watch("isCompletable") && !editId && (
+              <div className="space-y-3 rounded-lg border p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Programmazione</p>
+                <Field label="Data e ora attività">
+                  <Input
+                    type="datetime-local"
+                    value={occasionalDate}
+                    onChange={(e) => setOccasionalDate(e.target.value)}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Se hai una fascia oraria configurata, viene espansa automaticamente in slot.
+                  </p>
+                </Field>
+                <Field label="Max partecipanti per slot">
+                  <Input
+                    type="number"
+                    min={1}
+                    value={defaultMaxOccupants}
+                    onChange={(e) => setDefaultMaxOccupants(parseInt(e.target.value) || 1)}
+                  />
+                </Field>
+              </div>
+            )}
 
             {form.watch("type") === "RECURRENT" && (
               <div className="space-y-3 rounded-lg border p-3">

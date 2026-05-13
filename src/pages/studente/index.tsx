@@ -9,6 +9,7 @@ import { Badge } from "~/components/ui/badge";
 import { Skeleton } from "~/components/ui/skeleton";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
+import { ChevronRight } from "lucide-react";
 
 const StudenteHome: NextPageWithLayout = function StudenteHome() {
   const { data: session, status } = useSession();
@@ -40,22 +41,30 @@ const StudenteHome: NextPageWithLayout = function StudenteHome() {
   return (
     <div className="space-y-6">
       {structure && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Regole — {structure.name}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {structure.rules.length === 0 && (
-              <p className="text-sm text-gray-500">Nessuna regola</p>
-            )}
-            {structure.rules.map((r) => (
-              <div key={r.id} className="flex items-start gap-2 text-sm">
-                <span className="shrink-0">{r.icon}</span>
-                <span>{r.text}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <Link href="/studente/regole" className="block group" aria-label="Vai alle regole della struttura">
+          <Card className="cursor-pointer transition-colors hover:border-blue-200 dark:hover:border-blue-700 group-focus-visible:ring-2 group-focus-visible:ring-blue-500">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base">Regole — {structure.name}</CardTitle>
+              <ChevronRight className="h-5 w-5 text-gray-400 shrink-0" aria-hidden="true" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {structure.rules.length === 0 && (
+                <p className="text-sm text-gray-500">Nessuna regola</p>
+              )}
+              {structure.rules.slice(0, 3).map((r) => (
+                <div key={r.id} className="flex items-start gap-2 text-sm">
+                  <span className="shrink-0" aria-hidden="true">{r.icon}</span>
+                  <span>{r.text}</span>
+                </div>
+              ))}
+              {structure.rules.length > 3 && (
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  Vedi tutte le {structure.rules.length} regole →
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">

@@ -8,6 +8,7 @@ import { api } from "~/utils/api";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Button } from "~/components/ui/button";
+import { ChevronRight } from "lucide-react";
 
 const TutorDashboard: NextPageWithLayout = function TutorDashboard() {
   const { data: session, status } = useSession();
@@ -87,23 +88,31 @@ const TutorDashboard: NextPageWithLayout = function TutorDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Regole struttura</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {structure.isLoading && <Skeleton className="h-8 w-full" />}
-            {structure.data?.rules.map((r) => (
-              <div key={r.id} className="flex items-start gap-2 text-sm">
-                <span>{r.icon}</span>
-                <span>{r.text}</span>
-              </div>
-            ))}
-            {structure.data?.rules.length === 0 && (
-              <p className="text-sm text-gray-500">Nessuna regola definita</p>
-            )}
-          </CardContent>
-        </Card>
+        <Link href="/tutor/regole" className="block group" aria-label="Vai alle regole struttura">
+          <Card className="cursor-pointer transition-colors hover:border-blue-200 dark:hover:border-blue-700 group-focus-visible:ring-2 group-focus-visible:ring-blue-500">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Regole struttura</CardTitle>
+              <ChevronRight className="h-4 w-4 text-gray-400 shrink-0" aria-hidden="true" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {structure.isLoading && <Skeleton className="h-8 w-full" />}
+              {structure.data?.rules.slice(0, 3).map((r) => (
+                <div key={r.id} className="flex items-start gap-2 text-sm">
+                  <span aria-hidden="true">{r.icon}</span>
+                  <span>{r.text}</span>
+                </div>
+              ))}
+              {(structure.data?.rules.length ?? 0) > 3 && (
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  +{(structure.data?.rules.length ?? 0) - 3} altre regole…
+                </p>
+              )}
+              {structure.data?.rules.length === 0 && (
+                <p className="text-sm text-gray-500">Nessuna regola definita</p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );

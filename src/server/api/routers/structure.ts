@@ -78,4 +78,22 @@ export const structureRouter = createTRPCRouter({
       }
       return ctx.db.rule.delete({ where: { id: input.id } });
     }),
+
+  moveRule: tutorProcedure
+    .input(z.object({ id: z.string(), direction: z.enum(["up", "down"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const structureId = ctx.session.user.structureId;
+      const rules = await ctx.db.rule.findMany({
+        where: { structureId },
+        orderBy: { order: "asc" },
+      });
+      const idx = rules.findIndex((r) => r.id === input.id);
+      if (idx === -1) throw new TRPCError({ code: "NOT_FOUND" });
+      const swapIdx = input.direction === "up" ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= rules.length) return;
+      const ruleA = rules[idx]!;
+      const ruleB = rules[swapIdx]!;
+      await ctx.db.rule.update({ where: { id: ruleA.id }, data: { order: ruleB.order } });
+      await ctx.db.rule.update({ where: { id: ruleB.id }, data: { order: ruleA.order } });
+    }),
 });

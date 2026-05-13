@@ -148,7 +148,7 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
           {completableTasks.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                Da completare
+                Attività da svolgere
               </p>
               {completableTasks.map((task) => {
                 const isDone = completedTaskIds.has(task.id);
@@ -192,6 +192,13 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
               })}
               {slotTasks.length > 0 && <Separator />}
             </div>
+          )}
+
+          {/* Slot tasks header */}
+          {slotTasks.length > 0 && (
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 pt-1">
+              Attività con prenotazione slot
+            </p>
           )}
 
           {/* Date strip for slot tasks */}
@@ -260,10 +267,10 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
                     })}
                   </div>
                   {totalAvailable === 0 ? (
-                    <p className="text-[10px] text-red-500 mt-1">Tutti gli slot al completo</p>
+                    <p className="text-[10px] text-red-500 mt-1 font-medium">Tutti gli slot al completo</p>
                   ) : (
-                    <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1">
-                      {totalAvailable} slot disponibili
+                    <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1 font-medium">
+                      Prenota il tuo slot → {totalAvailable} disponibili
                     </p>
                   )}
                 </div>
