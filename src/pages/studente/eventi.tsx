@@ -281,12 +281,30 @@ function EventDetailDialog({
               <DialogTitle>{event.title}</DialogTitle>
             </DialogHeader>
             <div className="space-y-2 text-sm">
-              {event.place && <p className="text-gray-600 dark:text-gray-300">📍 {event.place}</p>}
-              <p className="text-gray-600 dark:text-gray-300">
-                📅 {format(new Date(event.startDate), "d MMM yyyy · HH:mm")} — {format(new Date(event.endDate), "HH:mm")}
+              {event.place && (
+                <div className="flex items-center gap-2">
+                  <p className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                    <span aria-hidden="true">📍</span>{event.place}
+                  </p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.place)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                    aria-label={`Apri ${event.place} su Google Maps`}
+                  >
+                    Maps →
+                  </a>
+                </div>
+              )}
+              <p className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                <span aria-hidden="true">📅</span>
+                {format(new Date(event.startDate), "d MMM yyyy · HH:mm")} — {format(new Date(event.endDate), "HH:mm")}
               </p>
               {event.userLimit && (
-                <p className="text-gray-600 dark:text-gray-300">👥 {event._count.participants}/{event.userLimit} posti</p>
+                <p className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                  <span aria-hidden="true">👥</span>{event._count.participants}/{event.userLimit} posti
+                </p>
               )}
               {event.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">

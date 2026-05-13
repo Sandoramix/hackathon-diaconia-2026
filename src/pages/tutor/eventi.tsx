@@ -181,7 +181,19 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
                 <div>
                   <h3 className="font-semibold leading-tight">{event.title}</h3>
                   {event.place && (
-                    <p className="flex items-center gap-1 text-xs text-gray-500"><MapPin className="h-3 w-3" aria-hidden="true" />{event.place}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="flex items-center gap-1 text-xs text-gray-500">
+                        <MapPin className="h-3 w-3" aria-hidden="true" />{event.place}
+                      </p>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.place)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-blue-600 hover:underline dark:text-blue-400"
+                        aria-label={`Apri su Maps`}
+                        onClick={(e) => e.stopPropagation()}
+                      >Maps →</a>
+                    </div>
                   )}
                 </div>
                 {event.hasFeedback && (

@@ -98,7 +98,7 @@ export default function DashboardLayout({ children, title, noPadding }: Dashboar
       <Head>
         <title>{title ? `${title} — Diaconia` : "Diaconia"}</title>
       </Head>
-      <div className="flex min-h-screen flex-col bg-gray-100 dark:bg-gray-950">
+      <div className={cn("flex flex-col bg-gray-100 dark:bg-gray-950", noPadding ? "h-[100svh]" : "min-h-screen")}>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:rounded focus:bg-blue-600 focus:p-3 focus:text-white"
@@ -120,7 +120,11 @@ export default function DashboardLayout({ children, title, noPadding }: Dashboar
 
         {/* Content */}
         {noPadding ? (
-          <main id="main-content" className="flex flex-1 flex-col overflow-hidden" style={{ paddingBottom: "3.5rem" }}>
+          <main
+            id="main-content"
+            className="flex flex-1 min-h-0 flex-col overflow-hidden"
+            style={{ paddingBottom: "3.5rem" }}
+          >
             {children}
           </main>
         ) : (

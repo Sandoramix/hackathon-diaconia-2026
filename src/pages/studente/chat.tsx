@@ -213,7 +213,7 @@ const StudenteChatPage: NextPageWithLayout = function StudenteChatPage() {
   }
 
   return (
-    <div className="flex flex-1 min-h-0 overflow-hidden border-x border-gray-200 dark:border-gray-700 mx-auto w-full max-w-2xl">
+    <div className="flex flex-1 min-h-0 overflow-hidden mx-auto w-full max-w-2xl border-x border-gray-200 dark:border-gray-700">
       {/* ── Sidebar ── */}
       <aside
         className={cn(
