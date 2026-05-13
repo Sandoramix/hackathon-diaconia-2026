@@ -2,10 +2,19 @@ import { useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import type { ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { cn } from "~/lib/utils";
 import { useTheme } from "~/lib/useTheme";
 import { api } from "~/utils/api";
+
+// ── Header actions context — pages inject buttons into the header ─────────────
+export const HeaderActionsContext = createContext<{
+  setHeaderActions: (node: ReactNode) => void;
+}>({ setHeaderActions: () => {} });
+
+export function useHeaderActions() {
+  return useContext(HeaderActionsContext);
+}
 import {
   MessageCircle,
   CalendarDays,
@@ -77,6 +86,8 @@ function DarkToggle() {
 export default function DashboardLayout({ children, title, noPadding }: DashboardLayoutProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [headerActions, setHeaderActionsState] = useState<ReactNode>(null);
+  const headerCtx = useMemo(() => ({ setHeaderActions: setHeaderActionsState }), []);
 
   if (status === "loading") {
     return (
@@ -94,6 +105,7 @@ export default function DashboardLayout({ children, title, noPadding }: Dashboar
   const nav = isStudente ? studenteNav : tutorNav;
 
   return (
+    <HeaderActionsContext.Provider value={headerCtx}>
     <>
       <Head>
         <title>{title ? `${title} — Diaconia` : "Diaconia"}</title>
@@ -107,14 +119,15 @@ export default function DashboardLayout({ children, title, noPadding }: Dashboar
         </a>
 
         {/* Top header */}
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-1 border-b border-gray-200 bg-white px-3 dark:border-gray-800 dark:bg-gray-900">
           {title ? (
-            <h1 className="flex-1 truncate text-base font-semibold text-gray-900 dark:text-gray-100">
+            <h1 className="flex-1 truncate text-base font-semibold text-gray-900 dark:text-gray-100 px-1">
               {title}
             </h1>
           ) : (
             <div className="flex-1" />
           )}
+          {headerActions}
           <DarkToggle />
         </header>
 
@@ -181,6 +194,7 @@ export default function DashboardLayout({ children, title, noPadding }: Dashboar
         </nav>
       </div>
     </>
+    </HeaderActionsContext.Provider>
   );
 }
 

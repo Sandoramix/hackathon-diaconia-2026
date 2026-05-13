@@ -32,6 +32,7 @@ import {
 } from "~/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { it } from "date-fns/locale";
 import { cn } from "~/lib/utils";
 
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
@@ -637,7 +638,7 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
             {Object.entries(slotsByDate).map(([dateKey, slots]) => (
               <div key={dateKey}>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">
-                  {format(new Date(dateKey), "EEEE d MMMM")}
+                  {format(new Date(dateKey), "EEEE d MMMM", { locale: it })}
                 </p>
                 <div className="space-y-1.5">
                   {slots.map((slot) => {

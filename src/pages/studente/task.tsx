@@ -1,7 +1,7 @@
+import { useContext, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { getDashboardLayout } from "~/layouts/DashboardLayout";
+import { getDashboardLayout, HeaderActionsContext } from "~/layouts/DashboardLayout";
 import type { NextPageWithLayout } from "../_app";
 import { api } from "~/utils/api";
 import { Button } from "~/components/ui/button";
@@ -26,8 +26,9 @@ import { it } from "date-fns/locale";
 import { cn } from "~/lib/utils";
 import {
   ChevronLeft, ChevronRight, CalendarDays, CheckCircle2, Clock,
-  ListChecks, Search, BookmarkCheck,
+  ListChecks, Search, BookmarkCheck, RefreshCw,
 } from "lucide-react";
+import { DateStrip } from "./eventi";
 
 const EMOJI_MAP: Record<number, string> = { 1: "😕", 2: "😐", 3: "😊" };
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
@@ -162,6 +163,7 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
   const router = useRouter();
   const [detailId, setDetailId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
+  const [calOpen, setCalOpen] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") void router.replace("/auth/tipo");
@@ -177,6 +179,31 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
   const { data: history } = api.task.myHistory.useQuery(undefined, {
     enabled: status === "authenticated",
   });
+
+  // Inject header actions
+  const { setHeaderActions } = useContext(HeaderActionsContext);
+  const setCalOpenRef = useRef(setCalOpen);
+  setCalOpenRef.current = setCalOpen;
+  const refetchRef = useRef(() => void utils.task.list.invalidate());
+  refetchRef.current = () => void utils.task.list.invalidate();
+
+  useEffect(() => {
+    setHeaderActions(
+      <div className="flex items-center gap-0.5 mr-1">
+        <button type="button" onClick={() => refetchRef.current()}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+          aria-label="Ricarica attività">
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <button type="button" onClick={() => setCalOpenRef.current(true)}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+          aria-label="Apri calendario">
+          <CalendarDays className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+    );
+    return () => setHeaderActions(null);
+  }, [setHeaderActions]);
 
   const completeMut = api.task.toggleComplete.useMutation({
     onSuccess: () => {
@@ -264,7 +291,6 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
                 if (!nextSlot) return null;
                 const slotDate = new Date(nextSlot.date);
                 const slotStart = nextSlot.slotStart ? new Date(nextSlot.slotStart) : slotDate;
-                const slotEnd = nextSlot.slotEnd ? new Date(nextSlot.slotEnd) : null;
                 const past = isPast(slotDate);
                 const timeLabel = nextSlot.slotStart && nextSlot.slotEnd
                   ? `${format(slotStart, "HH:mm")} – ${format(new Date(nextSlot.slotEnd), "HH:mm")}`
@@ -369,10 +395,11 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
         <TabsContent value="esplora" className="space-y-4 pt-3">
           {!isLoading && (
             <>
-              <MonthCalendar
-                tasks={tasks as TaskItem[]}
+              {/* Scrollable date strip */}
+              <DateStrip
                 selected={selectedDate}
-                onSelect={setSelectedDate}
+                onChange={setSelectedDate}
+                highlightedDates={slotTasks.flatMap((t) => t.slots.map((s) => new Date(s.date)))}
               />
 
               <div className="space-y-2">
@@ -463,6 +490,23 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
       {detailId && (
         <TaskDetailDialog taskId={detailId} onClose={() => setDetailId(null)} />
       )}
+
+      {/* Calendar modal — full month view */}
+      <Dialog open={calOpen} onOpenChange={(o) => !o && setCalOpen(false)}>
+        <DialogContent className="max-w-sm p-4">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5" aria-hidden="true" />
+              Calendario attività
+            </DialogTitle>
+          </DialogHeader>
+          <MonthCalendar
+            tasks={tasks as TaskItem[]}
+            selected={selectedDate}
+            onSelect={(d) => { setSelectedDate(d); setCalOpen(false); }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
