@@ -15,7 +15,7 @@ import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
 import { Textarea } from "~/components/ui/textarea";
 import { Switch } from "~/components/ui/switch";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import {
   Dialog,
@@ -223,44 +223,45 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
       <div className="space-y-3">
         {tasks.map((task) => (
           <Card key={task.id}>
-            <CardContent className="flex items-start gap-3 py-3">
-              {task.image && (
-                <img src={task.image} alt={task.title} className="h-14 w-14 rounded-lg object-cover shrink-0" />
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-sm">{task.title}</p>
-                  <div className="flex shrink-0 gap-1">
-                    <Badge variant="outline" className="text-xs">
+            <CardContent className="py-3">
+              <div className="flex items-start gap-3">
+                {task.image && (
+                  <img src={task.image} alt={task.title} className="h-14 w-14 rounded-lg object-cover shrink-0" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-semibold text-sm">{task.title}</p>
+                    <Badge variant="outline" className="shrink-0 text-xs">
                       {task.type === "RECURRENT" ? "Ricorrente" : "Occasionale"}
                     </Badge>
                   </div>
+                  {task.type === "RECURRENT" && task.recurrenceDays.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {task.recurrenceDays.map((d) => DAY_LABELS[d]).join(" · ")}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">{task.slots.length} slot</p>
+                  {(task.tags as { id: string; name: string }[] | undefined)?.length ? (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {(task.tags as { id: string; name: string }[]).map(t => (
+                        <Badge key={t.id} variant="secondary" className="text-[10px]">{t.name}</Badge>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
-                {task.type === "RECURRENT" && task.recurrenceDays.length > 0 && (
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {task.recurrenceDays.map((d) => DAY_LABELS[d]).join(" · ")}
-                  </p>
-                )}
-                <p className="text-xs text-gray-500 mt-1">{task.slots.length} slot</p>
-                {(task.tags as { id: string; name: string }[] | undefined)?.length ? (
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {(task.tags as { id: string; name: string }[]).map(t => (
-                      <Badge key={t.id} variant="secondary" className="text-[10px]">{t.name}</Badge>
-                    ))}
-                  </div>
-                ) : null}
               </div>
-              <div className="flex gap-1 shrink-0">
-                <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setManagingId(task.id)} aria-label="Gestisci slot">
+              <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
+                <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => setManagingId(task.id)}>
                   <Settings2 className="h-4 w-4" aria-hidden="true" />
+                  Gestisci slot
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openDuplicate(task)} aria-label="Duplica task">
+                <Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => openDuplicate(task)} aria-label="Duplica task">
                   <Copy className="h-4 w-4" aria-hidden="true" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(task)} aria-label="Modifica task">
+                <Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => openEdit(task)} aria-label="Modifica task">
                   <Pencil className="h-4 w-4" aria-hidden="true" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400" onClick={() => deleteMut.mutate({ id: task.id })} disabled={deleteMut.isPending} aria-label="Elimina task">
+                <Button size="icon" variant="ghost" className="h-10 w-10 text-red-600 hover:text-red-700 dark:text-red-400" onClick={() => deleteMut.mutate({ id: task.id })} disabled={deleteMut.isPending} aria-label="Elimina task">
                   <Trash2 className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>

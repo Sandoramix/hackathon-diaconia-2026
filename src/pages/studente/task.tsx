@@ -164,6 +164,7 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
   const [calOpen, setCalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("miei");
 
   useEffect(() => {
     if (status === "unauthenticated") void router.replace("/auth/tipo");
@@ -184,6 +185,8 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
   const { setHeaderActions } = useContext(HeaderActionsContext);
   const setCalOpenRef = useRef(setCalOpen);
   setCalOpenRef.current = setCalOpen;
+  const setActiveTabRef = useRef(setActiveTab);
+  setActiveTabRef.current = setActiveTab;
   const refetchRef = useRef(() => void utils.task.list.invalidate());
   refetchRef.current = () => void utils.task.list.invalidate();
 
@@ -195,9 +198,9 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
           aria-label="Ricarica attività">
           <RefreshCw className="h-4 w-4" aria-hidden="true" />
         </button>
-        <button type="button" onClick={() => setCalOpenRef.current(true)}
+        <button type="button" onClick={() => { setActiveTabRef.current("esplora"); setCalOpenRef.current(true); }}
           className="flex h-9 w-9 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-          aria-label="Apri calendario">
+          aria-label="Apri calendario attività">
           <CalendarDays className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
@@ -257,7 +260,7 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
     <div className="space-y-2">
       {isLoading && <Skeleton className="h-64 w-full" />}
 
-      <Tabs defaultValue="miei" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full">
           <TabsTrigger value="miei" className="flex-1 gap-1.5">
             <BookmarkCheck className="h-4 w-4" aria-hidden="true" />
@@ -503,7 +506,7 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
           <MonthCalendar
             tasks={tasks as TaskItem[]}
             selected={selectedDate}
-            onSelect={(d) => { setSelectedDate(d); setCalOpen(false); }}
+            onSelect={(d) => { setSelectedDate(d); setCalOpen(false); setActiveTab("esplora"); }}
           />
         </DialogContent>
       </Dialog>

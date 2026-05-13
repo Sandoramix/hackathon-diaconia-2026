@@ -245,26 +245,26 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
                   ))}
                 </div>
               )}
-              <div className="mt-auto flex gap-1 pt-2">
+              <div className="mt-auto flex items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
                 <Button
                   size="sm"
                   variant="outline"
                   className="flex-1 gap-1.5"
                   onClick={() => setManagingId(event.id)}
                 >
-                  <Users className="h-3.5 w-3.5" aria-hidden="true" />
+                  <Users className="h-4 w-4" aria-hidden="true" />
                   Partecipanti
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openDuplicate(event)} aria-label="Duplica evento">
+                <Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => openDuplicate(event)} aria-label="Duplica evento">
                   <Copy className="h-4 w-4" aria-hidden="true" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(event)} aria-label="Modifica evento">
+                <Button size="icon" variant="ghost" className="h-10 w-10" onClick={() => openEdit(event)} aria-label="Modifica evento">
                   <Pencil className="h-4 w-4" aria-hidden="true" />
                 </Button>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400"
+                  className="h-10 w-10 text-red-600 hover:text-red-700 dark:text-red-400"
                   onClick={() => deleteMut.mutate({ id: event.id })}
                   disabled={deleteMut.isPending}
                   aria-label="Elimina evento"
