@@ -42,6 +42,7 @@ const tutorNav: NavItem[] = [
   { href: "/tutor",         label: "Home",   icon: LayoutDashboard },
   { href: "/tutor/utenti",  label: "Utenti", icon: Users },
   { href: "/tutor/chat",    label: "Chat",   icon: MessageCircle, badge: ChatUnreadDot },
+  { href: "/tutor/eventi",  label: "Eventi", icon: CalendarDays },
   { href: "/tutor/task",    label: "Task",   icon: ListChecks },
   { href: "/tutor/profilo", label: "Profilo",icon: UserCircle },
 ];

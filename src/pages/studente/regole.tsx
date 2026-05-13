@@ -5,6 +5,23 @@ import { getDashboardLayout } from "~/layouts/DashboardLayout";
 import type { NextPageWithLayout } from "../_app";
 import { api } from "~/utils/api";
 import { Skeleton } from "~/components/ui/skeleton";
+import { ICON_MAP, parseLucideIcon } from "~/lib/lucideIcons";
+import { cn } from "~/lib/utils";
+
+function RuleIcon({ icon }: { icon: string }) {
+  const parsed = parseLucideIcon(icon);
+  if (parsed.type === "lucide") {
+    const IconComp = ICON_MAP[parsed.name];
+    if (!IconComp) return null;
+    return (
+      <IconComp
+        className={cn("h-7 w-7 shrink-0", parsed.color || "text-gray-700 dark:text-gray-300")}
+        aria-hidden="true"
+      />
+    );
+  }
+  return <span className="text-2xl leading-none shrink-0" aria-hidden="true">{parsed.value}</span>;
+}
 
 const StudenteRegolePage: NextPageWithLayout = function StudenteRegolePage() {
   const { data: session, status } = useSession();
@@ -24,33 +41,41 @@ const StudenteRegolePage: NextPageWithLayout = function StudenteRegolePage() {
   if (status !== "authenticated") return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {isLoading && (
-        <div className="space-y-3">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
+        <div className="space-y-3" aria-busy="true">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
         </div>
       )}
-      {structure?.rules.length === 0 && (
-        <p className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">Nessuna regola definita</p>
+
+      {!isLoading && structure?.rules.length === 0 && (
+        <p className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+          Nessuna regola definita
+        </p>
       )}
-      <div className="space-y-3">
+
+      <ol aria-label="Regole della struttura" className="space-y-2">
         {structure?.rules.map((rule, i) => (
-          <div
+          <li
             key={rule.id}
-            className="flex items-start gap-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4"
+            className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
           >
-            <span className="text-2xl leading-none">{rule.icon}</span>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700">
+              <RuleIcon icon={rule.icon} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                 Regola {i + 1}
               </p>
-              <p className="mt-0.5 text-sm text-gray-800 dark:text-gray-100">{rule.text}</p>
+              <p className="mt-0.5 text-sm leading-relaxed text-gray-800 dark:text-gray-100">
+                {rule.text}
+              </p>
             </div>
-          </div>
+          </li>
         ))}
-      </div>
+      </ol>
     </div>
   );
 };
