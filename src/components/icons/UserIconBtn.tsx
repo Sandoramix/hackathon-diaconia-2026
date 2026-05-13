@@ -8,7 +8,7 @@ export const UserIconBtn = (props: UserIconProps) => {
 
     return (
         <button
-            className="flex flex-col  items-center justify-center bg-white text-sm font-semibold"
+            className="flex flex-col items-center justify-center bg-transparent text-sm font-semibold"
             {...props}
         >
             <div
