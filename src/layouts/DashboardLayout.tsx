@@ -1,4 +1,5 @@
 import { useSession } from "next-auth/react";
+import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import type { ReactNode } from "react";
@@ -72,6 +73,10 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
   const nav = isStudente ? studenteNav : tutorNav;
 
   return (
+    <>
+      <Head>
+        <title>{title ? `${title} — Diaconia` : "Diaconia"}</title>
+      </Head>
     <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-950">
       <a
         href="#main-content"
@@ -135,6 +140,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
         </div>
       </nav>
     </div>
+    </>
   );
 }
 
