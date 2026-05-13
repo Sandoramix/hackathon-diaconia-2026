@@ -1,56 +1,119 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import bcrypt from "bcryptjs";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { z } from "zod";
 
+import { type UserRole } from "../../../generated/prisma";
 import { db } from "~/server/db";
 
-/**
- * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
- * object and keep type safety.
- *
- * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
- */
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
-      // ...other properties
-      // role: UserRole;
+      username: string;
+      role: UserRole;
+      mustChangePassword: boolean;
+      structureId: string | null;
     } & DefaultSession["user"];
   }
-
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  interface User {
+    username?: string;
+    role?: UserRole;
+    mustChangePassword?: boolean;
+    structureId?: string | null;
+  }
 }
 
-/**
- * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
- *
- * @see https://next-auth.js.org/configuration/options
- */
+const credentialsSchema = z.object({
+  username: z.string(),
+  password: z.string().min(1),
+});
+
 export const authConfig = {
   providers: [
-    DiscordProvider,
-    /**
-     * ...add more providers here.
-     *
-     * Most other providers require a bit more work than the Discord provider. For example, the
-     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-     *
-     * @see https://next-auth.js.org/providers/github
-     */
-  ],
-  adapter: PrismaAdapter(db),
-  callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        username: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const parsed = credentialsSchema.safeParse(credentials);
+        if (!parsed.success) return null;
+
+        const user = await db.user.findFirst({
+          where: {
+            OR: [
+              { email: parsed.data.username },
+              { username: parsed.data.username },
+            ],
+          },
+        });
+        if (!user?.password) return null;
+        if (user.deletedAt) return null;
+
+        const isHashed = user.password.startsWith("$2");
+        const valid = isHashed
+          ? await bcrypt.compare(parsed.data.password, user.password)
+          : parsed.data.password === user.password;
+        if (!valid) return null;
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          username: user.username,
+          role: user.role,
+          mustChangePassword: user.mustChangePassword,
+          structureId: user.structureId,
+        };
       },
     }),
+  ],
+  adapter: PrismaAdapter(db),
+  session: { strategy: "jwt" },
+  callbacks: {
+    jwt({ token, user, trigger, session: sessionUpdate }) {
+      const t = token as typeof token & {
+        id?: string;
+        username?: string;
+        role?: UserRole;
+        mustChangePassword?: boolean;
+        structureId?: string | null;
+      };
+      if (user) {
+        t.id = user.id;
+        t.username = user.username;
+        t.role = user.role;
+        t.mustChangePassword = user.mustChangePassword;
+        t.structureId = user.structureId;
+      }
+      if (trigger === "update" && sessionUpdate) {
+        const upd = sessionUpdate as { mustChangePassword?: boolean };
+        if (typeof upd.mustChangePassword === "boolean") {
+          t.mustChangePassword = upd.mustChangePassword;
+        }
+      }
+      return t;
+    },
+    session({ session, token }) {
+      const t = token as typeof token & {
+        id?: string;
+        username?: string;
+        role?: UserRole;
+        mustChangePassword?: boolean;
+        structureId?: string | null;
+      };
+      session.user.id = t.id ?? "";
+      session.user.username = t.username ?? "";
+      session.user.role = t.role ?? "STUDENTE";
+      session.user.mustChangePassword = t.mustChangePassword ?? false;
+      session.user.structureId = t.structureId ?? null;
+      return session;
+    },
+  },
+  pages: {
+    signIn: "/auth/tipo",
   },
 } satisfies NextAuthConfig;

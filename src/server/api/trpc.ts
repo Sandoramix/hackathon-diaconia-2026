@@ -153,8 +153,28 @@ export const protectedProcedure = t.procedure
     }
     return next({
       ctx: {
-        // infers the `session` as non-nullable
         session: { ...ctx.session, user: ctx.session.user },
+      },
+    });
+  });
+
+export const tutorProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(({ ctx, next }) => {
+    const user = ctx.session?.user;
+    if (!user) throw new TRPCError({ code: "UNAUTHORIZED" });
+    if (user.role !== "TUTOR" && user.role !== "ADMIN") {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+    if (!user.structureId) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "No structure assigned" });
+    }
+    return next({
+      ctx: {
+        session: {
+          ...ctx.session!,
+          user: { ...user, structureId: user.structureId },
+        },
       },
     });
   });
