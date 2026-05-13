@@ -9,7 +9,7 @@ import {
   Smartphone, Monitor, Wifi, Volume2, VolumeX, Tv, Headphones, Camera,
   Home, School, Building2, Bed, Key, Lock, Unlock, Bell, BellOff,
   Info, HelpCircle, FileText, ClipboardList, ListChecks,
-  Sun, Moon, Flame, Zap, Leaf, Bike, Trash2, Recycle,
+  Sun, Moon, Flame, Zap, Leaf, Trash2, Recycle,
   Hand, Handshake,
   Accessibility, Footprints,
   MapPin, Navigation,
@@ -19,7 +19,7 @@ import {
   Baby, PersonStanding,
   Apple, Salad,
   Gamepad2,
-  Bike as Bicycle,
+  Bike,
   SunMedium,
 } from "lucide-react";
 
@@ -134,33 +134,49 @@ export const ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
   ICON_LIST.map(({ name, Icon }) => [name, Icon]),
 );
 
-export const ICON_COLORS: { label: string; value: string; preview: string }[] = [
-  { label: "Predefinito", value: "",               preview: "text-gray-500" },
-  { label: "Rosso",       value: "text-red-600",   preview: "text-red-600" },
-  { label: "Arancione",   value: "text-orange-500",preview: "text-orange-500" },
-  { label: "Giallo",      value: "text-yellow-500",preview: "text-yellow-500" },
-  { label: "Verde",       value: "text-green-600", preview: "text-green-600" },
-  { label: "Azzurro",     value: "text-sky-500",   preview: "text-sky-500" },
-  { label: "Blu",         value: "text-blue-600",  preview: "text-blue-600" },
-  { label: "Viola",       value: "text-purple-600",preview: "text-purple-600" },
-  { label: "Rosa",        value: "text-pink-500",  preview: "text-pink-500" },
-];
+export const ICON_COLORS = [
+  { name: "gray",    label: "Predefinito", textColor: "text-gray-500", darkTextColor: "dark:text-gray-400", bgColor: "bg-gray-500", darkBgColor: "dark:bg-gray-400" },
+  { name: "red",     label: "Rosso",       textColor: "text-red-600", darkTextColor: "dark:text-red-400", bgColor: "bg-red-600", darkBgColor: "dark:bg-red-400" },
+  { name: "orange",  label: "Arancione",   textColor: "text-orange-500", darkTextColor: "dark:text-orange-400", bgColor: "bg-orange-500", darkBgColor: "dark:bg-orange-400" },
+  { name: "yellow",  label: "Giallo",      textColor: "text-yellow-500", darkTextColor: "dark:text-yellow-400", bgColor: "bg-yellow-500", darkBgColor: "dark:bg-yellow-400" },
+  { name: "green",   label: "Verde",       textColor: "text-green-600", darkTextColor: "dark:text-green-400", bgColor: "bg-green-600", darkBgColor: "dark:bg-green-400" },
+  { name: "sky",     label: "Azzurro",     textColor: "text-sky-500", darkTextColor: "dark:text-sky-400", bgColor: "bg-sky-500", darkBgColor: "dark:bg-sky-400" },
+  { name: "blue",    label: "Blu",         textColor: "text-blue-600", darkTextColor: "dark:text-blue-400", bgColor: "bg-blue-600", darkBgColor: "dark:bg-blue-400" },
+  { name: "purple",  label: "Viola",       textColor: "text-purple-600", darkTextColor: "dark:text-purple-400", bgColor: "bg-purple-600", darkBgColor: "dark:bg-purple-400" },
+  { name: "pink",    label: "Rosa",        textColor: "text-pink-500", darkTextColor: "dark:text-pink-400", bgColor: "bg-pink-500", darkBgColor: "dark:bg-pink-400" },
+] as const;
 
-/** Map stored Tailwind class value → preview Tailwind class */
-export const COLOR_PREVIEW_MAP: Record<string, string> = Object.fromEntries(
-  ICON_COLORS.map((c) => [c.value, c.preview]),
-);
+export type IconColorName = (typeof ICON_COLORS)[number]["name"];
 
-/** Parse icon stored as "lucide:Name:colorClass" or raw emoji */
-export function parseLucideIcon(icon: string): { type: "lucide"; name: string; color: string } | { type: "emoji"; value: string } {
+export const ICON_COLOR_MAP = Object.fromEntries(
+  ICON_COLORS.map((c) => [c.name, c]),
+) as Record<IconColorName, (typeof ICON_COLORS)[number]>;
+
+/** Parse icon stored as "lucide:Name:colorName" or raw emoji */
+export function parseLucideIcon(icon: string): { type: "lucide"; name: string; color: IconColorName } | { type: "emoji"; value: string } {
   if (icon.startsWith("lucide:")) {
-    const parts = icon.split(":");
-    return { type: "lucide", name: parts[1] ?? "", color: parts[2] ?? "" };
+    const [, name, colorStr] = icon.split(":");
+    let color: IconColorName = "gray";
+
+    if (colorStr) {
+      // Backwards compatibility with old format
+      if (colorStr.startsWith("text-")) {
+        color = ICON_COLORS.find((c) => c.textColor === colorStr)?.name ?? "gray";
+      } else {
+        color = colorStr as IconColorName;
+      }
+    }
+    
+    return { type: "lucide", name: name ?? "", color };
   }
   return { type: "emoji", value: icon };
 }
 
 /** Build the stored icon string for lucide icons */
-export function buildLucideIcon(name: string, color: string): string {
-  return color ? `lucide:${name}:${color}` : `lucide:${name}`;
+export function buildLucideIcon(name:string, color: IconColorName | null): string {
+  // We don't store "gray" to save space, it's the default.
+  if (color && color !== "gray") {
+    return `lucide:${name}:${color}`;
+  }
+  return `lucide:${name}`;
 }

@@ -24,9 +24,14 @@ import { toast } from "sonner";
 import { ChevronUp, ChevronDown, Pencil, Trash2, Plus, Search, Smile } from "lucide-react";
 import { cn } from "~/lib/utils";
 import {
-  ICON_LIST, ICON_MAP, ICON_COLORS,
-  parseLucideIcon, buildLucideIcon,
+  ICON_LIST,
+  ICON_COLORS,
+  buildLucideIcon,
+  parseLucideIcon,
+  type IconColorName,
 } from "~/lib/lucideIcons";
+import { RenderIcon } from "~/components/RenderIcon";
+import { LucideIcon } from "~/components/LucideIcon";
 
 const QUICK_EMOJIS = [
   "🚫", "⚠️", "✅", "🤝", "📱", "🎮", "🎵", "🍽️",
@@ -41,22 +46,6 @@ const ruleSchema = z.object({
 
 type RuleForm = z.infer<typeof ruleSchema>;
 
-/** Renders a rule icon — supports both emoji strings and "lucide:Name:color" format */
-function RuleIconDisplay({ icon, size = "h-6 w-6" }: { icon: string; size?: string }) {
-  const parsed = parseLucideIcon(icon);
-  if (parsed.type === "lucide") {
-    const IconComp = ICON_MAP[parsed.name];
-    if (!IconComp) return <span className="text-2xl leading-none">?</span>;
-    return (
-      <IconComp
-        className={cn(size, parsed.color || "text-gray-700 dark:text-gray-300")}
-        aria-hidden="true"
-      />
-    );
-  }
-  return <span className="text-2xl leading-none" aria-hidden="true">{parsed.value}</span>;
-}
-
 /** Icon picker for Lucide icons with search + color selection */
 function LucideIconPicker({
   selectedIcon,
@@ -64,11 +53,11 @@ function LucideIconPicker({
   onSelect,
 }: {
   selectedIcon: string;
-  selectedColor: string;
-  onSelect: (name: string, color: string) => void;
+  selectedColor: IconColorName;
+  onSelect: (name: string, color: IconColorName) => void;
 }) {
   const [iconSearch, setIconSearch] = useState("");
-  const [color, setColor] = useState(selectedColor);
+  const [color, setColor] = useState<IconColorName>(selectedColor);
 
   const filtered = ICON_LIST.filter((e) => {
     const q = iconSearch.toLowerCase();
@@ -83,17 +72,17 @@ function LucideIconPicker({
         <div className="flex flex-wrap gap-2">
           {ICON_COLORS.map((c) => (
             <button
-              key={c.value}
+              key={c.name}
               type="button"
               onClick={() => {
-                setColor(c.value);
-                if (selectedIcon) onSelect(selectedIcon, c.value);
+                setColor(c.name);
+                if (selectedIcon) onSelect(selectedIcon, c.name);
               }}
               aria-label={c.label}
-              aria-pressed={color === c.value}
+              aria-pressed={color === c.name}
               className={cn(
                 "flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-                color === c.value
+                color === c.name
                   ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30"
                   : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700",
               )}
@@ -101,9 +90,8 @@ function LucideIconPicker({
               <span
                 className={cn(
                   "h-3.5 w-3.5 rounded-full flex items-center justify-center",
-                  c.value
-                    ? c.preview.replace("text-", "bg-").replace("dark:text-", "")
-                    : "bg-gray-600",
+                  c.bgColor,
+                  c.darkBgColor,
                 )}
               />
               {c.label}
@@ -131,8 +119,8 @@ function LucideIconPicker({
         aria-label="Icone disponibili"
       >
         {filtered.map((entry) => {
-          const IconComp = entry.Icon;
           const isSelected = selectedIcon === entry.name;
+          const colorClasses = ICON_COLORS.find((c) => c.name === color);
           return (
             <button
               key={entry.name}
@@ -149,8 +137,9 @@ function LucideIconPicker({
                   : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700",
               )}
             >
-              <IconComp
-                className={cn("h-5 w-5", color || "text-gray-700 dark:text-gray-300")}
+              <LucideIcon
+                name={entry.name}
+                className={cn("h-5 w-5", colorClasses?.textColor, colorClasses?.darkTextColor)}
                 aria-hidden="true"
               />
               <span className="text-[8px] text-gray-400 truncate w-full text-center leading-tight">
@@ -175,7 +164,7 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [lucideIconName, setLucideIconName] = useState("");
-  const [lucideColor, setLucideColor] = useState("");
+  const [lucideColor, setLucideColor] = useState<IconColorName>("gray");
   const [iconTab, setIconTab] = useState<"emoji" | "lucide">("emoji");
 
   useEffect(() => {
@@ -229,7 +218,7 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
     } else {
       setIconTab("emoji");
       setLucideIconName("");
-      setLucideColor("");
+      setLucideColor("gray");
     }
     setShowForm(true);
   }
@@ -239,7 +228,7 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
     form.reset({ icon: "", text: "" });
     setIconTab("emoji");
     setLucideIconName("");
-    setLucideColor("");
+    setLucideColor("gray");
     setShowForm(true);
   }
 
@@ -248,7 +237,7 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
     setEditId(null);
     form.reset({ icon: "", text: "" });
     setLucideIconName("");
-    setLucideColor("");
+    setLucideColor("gray");
   }
 
   function handleDelete(id: string) {
@@ -284,7 +273,7 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
             <Card>
               <CardContent className="flex items-center gap-3 px-4 py-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center">
-                  <RuleIconDisplay icon={rule.icon} />
+                  <RenderIcon icon={rule.icon} className="h-6 w-6" />
                 </div>
                 <p className="flex-1 text-sm leading-snug text-gray-800 dark:text-gray-100">
                   {rule.text}
@@ -328,7 +317,7 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
           {(watchedIcon || watchedText) && (
             <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/20" aria-live="polite" aria-label="Anteprima">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-                {watchedIcon ? <RuleIconDisplay icon={watchedIcon} /> : <span className="text-2xl leading-none text-gray-300">?</span>}
+                {watchedIcon ? <RenderIcon icon={watchedIcon} className="h-6 w-6" /> : <span className="text-2xl leading-none text-gray-300">?</span>}
               </div>
               <p className="text-sm leading-snug text-gray-800 dark:text-gray-100">
                 {watchedText || <span className="italic text-gray-400">Testo regola…</span>}

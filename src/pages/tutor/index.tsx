@@ -10,6 +10,7 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { Button } from "~/components/ui/button";
 import { ChevronRight, Users, GraduationCap, CalendarDays, CheckSquare, Star, ClipboardList } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { RenderIcon } from "~/components/RenderIcon";
 
 const TutorDashboard: NextPageWithLayout = function TutorDashboard() {
   const { data: session, status } = useSession();
@@ -99,7 +100,7 @@ const TutorDashboard: NextPageWithLayout = function TutorDashboard() {
               {structure.isLoading && <Skeleton className="h-8 w-full" />}
               {structure.data?.rules.slice(0, 3).map((r) => (
                 <div key={r.id} className="flex items-start gap-2 text-sm">
-                  <span aria-hidden="true">{r.icon}</span>
+                  <RenderIcon icon={r.icon} className="h-5 w-5" />
                   <span>{r.text}</span>
                 </div>
               ))}
