@@ -4,11 +4,7 @@ import { TRPCError } from "@trpc/server";
 
 import { createTRPCRouter, protectedProcedure, tutorProcedure } from "~/server/api/trpc";
 
-const passwordSchema = z
-  .string()
-  .min(8, "Minimo 8 caratteri")
-  .regex(/\d/, "Deve contenere almeno un numero")
-  .regex(/[^a-zA-Z0-9]/, "Deve contenere almeno un simbolo");
+const passwordSchema = z.string().min(1, "Obbligatorio");
 
 export const userRouter = createTRPCRouter({
   changePassword: protectedProcedure
@@ -103,7 +99,7 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         username: z.string().min(3),
-        password: z.string().min(6),
+        password: z.string().min(1),
         role: z.enum(["STUDENTE", "TUTOR"]),
         name: z.string().optional(),
         email: z.string().email().optional(),
@@ -136,7 +132,7 @@ export const userRouter = createTRPCRouter({
       z.object({
         prefix: z.string().min(1).max(20),
         count: z.number().int().min(1).max(100),
-        passwordTemplate: z.string().min(6),
+        passwordTemplate: z.string().min(1),
         mustChangePassword: z.boolean().default(true),
       }),
     )
@@ -163,7 +159,7 @@ export const userRouter = createTRPCRouter({
         notes: z.string().optional().nullable(),
         familyContacts: z.string().optional().nullable(),
         mustChangePassword: z.boolean().optional(),
-        newPassword: z.string().min(6).optional(),
+        newPassword: z.string().min(1).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

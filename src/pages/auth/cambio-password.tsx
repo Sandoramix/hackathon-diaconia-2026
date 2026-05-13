@@ -11,11 +11,7 @@ import type { NextPageWithLayout } from "../_app";
 
 const schema = z
   .object({
-    password: z
-      .string()
-      .min(8, "Minimo 8 caratteri")
-      .regex(/\d/, "Deve contenere almeno un numero")
-      .regex(/[^a-zA-Z0-9]/, "Deve contenere almeno un simbolo"),
+    password: z.string().min(1, "Obbligatorio"),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -99,11 +95,6 @@ const CambioPasswordPage: NextPageWithLayout = function CambioPasswordPage() {
             </p>
           )}
         </div>
-        <ul className="space-y-1 text-xs text-gray-500 dark:text-gray-400">
-          <li>• Minimo 8 caratteri</li>
-          <li>• Almeno un numero</li>
-          <li>• Almeno un simbolo (es. !, @, #…)</li>
-        </ul>
         {submitError && <p className="text-sm text-red-600">{submitError}</p>}
         <button
           type="submit"

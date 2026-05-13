@@ -56,15 +56,22 @@ function MonthCalendar({
   selected: Date;
   onSelect: (d: Date) => void;
 }) {
-  const [viewMonth, setViewMonth] = useState(() => startOfMonth(selected));
+  const slotTasks = tasks.filter((t) => !t.isCompletable);
+  const now = new Date();
+  const nearestFutureSlot = slotTasks
+    .flatMap((t) => t.slots.map((s) => new Date(s.date)))
+    .filter((d) => d >= startOfDay(now))
+    .sort((a, b) => a.getTime() - b.getTime())[0];
+
+  const [viewMonth, setViewMonth] = useState(() =>
+    startOfMonth(nearestFutureSlot ?? selected),
+  );
 
   const monthStart = startOfMonth(viewMonth);
   const monthEnd = endOfMonth(viewMonth);
   const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
   const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: calStart, end: calEnd });
-
-  const slotTasks = tasks.filter((t) => !t.isCompletable);
 
   function getDayInfo(day: Date) {
     const dayTasks = slotTasks.filter((t) =>
@@ -201,7 +208,14 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
 
   const completedTaskIds = new Set(history?.completedTasks.map((c) => c.taskId) ?? []);
   const completableTasks = tasks.filter((t) => t.isCompletable);
-  const slotTasks = tasks.filter((t) => !t.isCompletable);
+  // Only show slot tasks where this student is assigned OR there are open slots
+  const slotTasks = tasks.filter((t) => {
+    if (t.isCompletable) return false;
+    if (t.slots.length === 0) return false;
+    const hasMyOccupation = t.slots.some((s) => s.occupations.length > 0);
+    const hasAvailableSlot = t.slots.some((s) => s._count.occupations < s.maxOccupants);
+    return hasMyOccupation || hasAvailableSlot;
+  });
 
   const daySlotTasks = slotTasks
     .map((task) => ({

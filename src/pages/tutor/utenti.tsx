@@ -61,7 +61,7 @@ type BulkResult = { name: string; username: string; password: string };
 
 const createSchema = z.object({
   username: z.string().min(3, "Min 3 caratteri"),
-  password: z.string().min(6, "Min 6 caratteri"),
+  password: z.string().min(1, "Obbligatorio"),
   role: z.enum(["STUDENTE", "TUTOR"]),
   name: z.string().optional(),
   email: z.string().email("Email non valida").optional().or(z.literal("")),
@@ -73,7 +73,7 @@ const createSchema = z.object({
 const bulkSchema = z.object({
   prefix: z.string().min(1).max(20, "Max 20 caratteri"),
   count: z.number().int().min(1).max(100),
-  passwordTemplate: z.string().min(6),
+  passwordTemplate: z.string().min(1, "Obbligatorio"),
   mustChangePassword: z.boolean(),
 });
 
@@ -760,7 +760,7 @@ function EditUserDialog({ userId, onClose }: { userId: string; onClose: () => vo
     notes: z.string().optional(),
     familyContacts: z.string().optional(),
     mustChangePassword: z.boolean().optional(),
-    newPassword: z.string().min(6).optional().or(z.literal("")),
+    newPassword: z.string().optional().or(z.literal("")),
   });
 
   const form = useForm<z.infer<typeof editSchema>>({
