@@ -130,10 +130,10 @@ async function buildHistory(
 }
 
 export const historyRouter = createTRPCRouter({
-  // Student: own history
+  // Student: own history — past events attended + past slots occupied + completable tasks done
   mine: protectedProcedure
     .input(z.object({
-      type: z.enum(ACTIVITY_TYPES).optional(),
+      type: z.enum(["event", "slot", "task_complete"] as const).optional(),
       dateFrom: z.date().optional(),
       dateTo: z.date().optional(),
       cursor: z.date().optional(),
@@ -143,7 +143,99 @@ export const historyRouter = createTRPCRouter({
       const user = ctx.session.user;
       if (!user.structureId) throw new TRPCError({ code: "FORBIDDEN" });
 
-      return buildHistory(ctx.db, user.id, { type: input.type, dateFrom: input.dateFrom, dateTo: input.dateTo }, input.cursor ?? null, input.limit);
+      const now = new Date();
+      const dateFilter: Record<string, Date> = {};
+      if (input.dateFrom) dateFilter.gte = input.dateFrom;
+      if (input.dateTo) dateFilter.lte = input.dateTo;
+      if (input.cursor) dateFilter.lt = input.cursor;
+
+      const fetch = input.type;
+
+      const [participations, slots, completions] = await Promise.all([
+        fetch && fetch !== "event" ? [] : ctx.db.eventParticipant.findMany({
+          where: {
+            userId: user.id,
+            event: {
+              structureId: user.structureId,
+              endDate: { lt: now },
+              ...(Object.keys(dateFilter).length ? { startDate: dateFilter } : {}),
+            },
+          },
+          include: {
+            event: { select: { id: true, title: true, startDate: true, endDate: true, place: true } },
+          },
+          orderBy: { createdAt: "desc" },
+          take: input.limit * 3,
+        }),
+
+        fetch && fetch !== "slot" ? [] : ctx.db.taskSlotOccupation.findMany({
+          where: {
+            userId: user.id,
+            isActive: true,
+            slot: {
+              date: { lt: now },
+              task: { structureId: user.structureId },
+              ...(Object.keys(dateFilter).length ? { date: { lt: now, ...dateFilter } } : {}),
+            },
+          },
+          include: {
+            slot: {
+              select: {
+                date: true, slotStart: true, slotEnd: true,
+                task: { select: { title: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: input.limit * 3,
+        }),
+
+        fetch && fetch !== "task_complete" ? [] : ctx.db.taskCompletion.findMany({
+          where: {
+            userId: user.id,
+            task: { structureId: user.structureId },
+            ...(Object.keys(dateFilter).length ? { completedAt: dateFilter } : {}),
+          },
+          include: { task: { select: { title: true, description: true } } },
+          orderBy: { completedAt: "desc" },
+          take: input.limit * 3,
+        }),
+      ]);
+
+      const all: ActivityEntry[] = [
+        ...(participations as { id: string; event: { id: string; title: string; startDate: Date; endDate: Date; place: string | null } }[]).map((p) => ({
+          id: `event-${p.id}`,
+          date: p.event.startDate,
+          type: "event" as const,
+          title: p.event.title,
+          description: `${p.event.place ? `📍 ${p.event.place}` : "Evento completato"}`,
+        })),
+
+        ...(slots as { id: string; createdAt: Date; slot: { date: Date; slotStart: Date | null; slotEnd: Date | null; task: { title: string } } }[]).map((o) => {
+          const timeLabel = o.slot.slotStart && o.slot.slotEnd
+            ? `${new Date(o.slot.slotStart).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}–${new Date(o.slot.slotEnd).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`
+            : new Date(o.slot.date).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+          return {
+            id: `slot-${o.id}`,
+            date: o.slot.slotStart ?? o.slot.date,
+            type: "slot" as const,
+            title: o.slot.task.title,
+            description: `Slot completato · ${timeLabel}`,
+          };
+        }),
+
+        ...(completions as { id: string; completedAt: Date; task: { title: string; description: string | null } }[]).map((c) => ({
+          id: `complete-${c.id}`,
+          date: c.completedAt,
+          type: "task_complete" as const,
+          title: c.task.title,
+          description: c.task.description ?? "Task completato",
+        })),
+      ];
+
+      const sorted = all.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, input.limit);
+      const nextCursor = all.length > input.limit ? sorted[sorted.length - 1]!.date : null;
+      return { entries: sorted, nextCursor };
     }),
 
   // Tutor: history for a specific student

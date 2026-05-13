@@ -6,7 +6,7 @@ import type { NextPageWithLayout } from "../_app";
 import { api } from "~/utils/api";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Input } from "~/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -14,20 +14,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Input } from "~/components/ui/input";
 import { Scheduler } from "calendarkit-pro";
 import type { CalendarEvent, ViewType } from "calendarkit-pro";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { format } from "date-fns";
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   event:         { label: "Evento",      color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" },
   slot:          { label: "Slot task",   color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" },
   task_complete: { label: "Completato",  color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" },
-  feedback:      { label: "Feedback",    color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300" },
-  note:          { label: "Nota tutor",  color: "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300" },
 };
 
-type Entry = { id: string; date: Date; type: string; title: string; description: string; meta?: Record<string, unknown> };
+type Entry = { id: string; date: Date; type: string; title: string; description: string };
 
 const StoricoPage: NextPageWithLayout = function StoricoPage() {
   const { data: session, status } = useSession();
@@ -48,7 +46,7 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
   }, [status, session, router]);
 
   const queryInput = {
-    type: typeFilter !== "all" ? (typeFilter as "event" | "slot" | "task_complete" | "feedback" | "note") : undefined,
+    type: typeFilter !== "all" ? (typeFilter as "event" | "slot" | "task_complete") : undefined,
     dateFrom: dateFrom ? new Date(dateFrom) : undefined,
     dateTo: dateTo ? new Date(dateTo) : undefined,
     cursor,
@@ -80,8 +78,8 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
     id: e.id,
     title: e.title,
     start: new Date(e.date),
-    end: new Date(new Date(e.date).getTime() + 30 * 60 * 1000),
-    color: e.type === "event" ? "#0081C6" : e.type === "slot" ? "#7c3aed" : e.type === "task_complete" ? "#059669" : "#d97706",
+    end: new Date(new Date(e.date).getTime() + 60 * 60 * 1000),
+    color: e.type === "event" ? "#0081C6" : e.type === "slot" ? "#7c3aed" : "#059669",
   }));
 
   return (
@@ -104,8 +102,6 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
                 <SelectItem value="event">Evento</SelectItem>
                 <SelectItem value="slot">Slot task</SelectItem>
                 <SelectItem value="task_complete">Completato</SelectItem>
-                <SelectItem value="feedback">Feedback</SelectItem>
-                <SelectItem value="note">Note tutor</SelectItem>
               </SelectContent>
             </Select>
             <Input
@@ -149,15 +145,9 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{entry.description}</p>
-                  {entry.type === "note" && !!entry.meta?.tutorName && (
-                    <p className="mt-0.5 text-[10px] text-gray-400 dark:text-gray-500">
-                      da {String(entry.meta.tutorName)}
-                    </p>
-                  )}
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-[10px] text-gray-400 dark:text-gray-500">{format(new Date(entry.date), "d MMM yy")}</p>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">{format(new Date(entry.date), "HH:mm")}</p>
                 </div>
               </div>
             );
@@ -183,9 +173,8 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
         <TabsContent value="calendario" className="pt-3">
           <div className="mb-2 flex gap-3 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
             <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-[#0081C6]" /> Evento</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-purple-600" /> Slot</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-purple-600" /> Slot task</span>
             <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-green-600" /> Completato</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> Feedback</span>
           </div>
           <div className="h-[550px] rounded-xl overflow-hidden border dark:border-gray-700">
             <Scheduler

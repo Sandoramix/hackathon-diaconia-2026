@@ -225,6 +225,40 @@ export const taskRouter = createTRPCRouter({
       });
     }),
 
+  // Tutor: assign or remove a student from a specific slot
+  assignSlot: tutorProcedure
+    .input(z.object({ slotId: z.string(), userId: z.string(), assign: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const slot = await ctx.db.taskSlot.findUnique({
+        where: { id: input.slotId },
+        include: {
+          task: true,
+          _count: { select: { occupations: { where: { isActive: true } } } },
+        },
+      });
+      if (!slot || slot.task.structureId !== ctx.session.user.structureId) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      if (input.assign) {
+        if (slot._count.occupations >= slot.maxOccupants) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Slot al completo" });
+        }
+        const existing = await ctx.db.taskSlotOccupation.findFirst({
+          where: { slotId: input.slotId, userId: input.userId, isActive: true },
+        });
+        if (existing) throw new TRPCError({ code: "BAD_REQUEST", message: "Già assegnato" });
+        return ctx.db.taskSlotOccupation.create({
+          data: { slotId: input.slotId, userId: input.userId, action: "SUBSCRIBED", isActive: true },
+        });
+      } else {
+        return ctx.db.taskSlotOccupation.updateMany({
+          where: { slotId: input.slotId, userId: input.userId, isActive: true },
+          data: { isActive: false },
+        });
+      }
+    }),
+
   deleteSlot: tutorProcedure
     .input(z.object({ slotId: z.string() }))
     .mutation(async ({ ctx, input }) => {

@@ -436,6 +436,15 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
     onError: (e) => toast.error(e.message),
   });
 
+  const { data: rawStudents = [] } = api.user.list.useQuery({ includeDeleted: false });
+  const students = (rawStudents as Array<{ id: string; name: string | null; username: string; role: string }>)
+    .filter((u) => u.role === "STUDENTE");
+
+  const assignMut = api.task.assignSlot.useMutation({
+    onSuccess: () => void utils.task.getById.invalidate({ id: taskId }),
+    onError: (e) => toast.error(e.message),
+  });
+
   const addSlotMut = api.task.addSlot.useMutation({
     onSuccess: () => {
       void utils.task.getById.invalidate({ id: taskId });
@@ -594,24 +603,66 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
                   {format(new Date(dateKey), "EEEE d MMMM")}
                 </p>
                 <div className="space-y-1.5">
-                  {slots.map((slot) => (
-                    <div key={slot.id} className="flex items-center justify-between rounded-md border dark:border-gray-700 p-2">
-                      <div>
-                        <p className="text-sm font-medium">{formatSlotLabel(slot)}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {slot._count.occupations}/{slot.maxOccupants} occupati
-                        </p>
+                  {slots.map((slot) => {
+                    type Occ = { id: string; userId: string; user?: { id: string; name: string | null; username: string } };
+                    const occs = (slot.occupations as Occ[]).filter((o) => (o as unknown as { isActive: boolean }).isActive !== false);
+                    const occupiedIds = new Set(occs.map((o) => o.userId));
+                    const canAssign = slot._count.occupations < slot.maxOccupants;
+                    const unassignedStudents = students.filter((s) => !occupiedIds.has(s.id));
+
+                    return (
+                      <div key={slot.id} className="rounded-md border dark:border-gray-700 p-2 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium">{formatSlotLabel(slot)}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {slot._count.occupations}/{slot.maxOccupants} occupati
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600"
+                            onClick={() => deleteSlotMut.mutate({ slotId: slot.id })}
+                          >
+                            🗑️
+                          </Button>
+                        </div>
+                        {/* Assigned students */}
+                        {occs.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {occs.map((o) => (
+                              <span key={o.id} className="flex items-center gap-1 text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 rounded-full px-2 py-0.5">
+                                {o.user?.name ?? o.user?.username ?? o.userId}
+                                <button
+                                  onClick={() => assignMut.mutate({ slotId: slot.id, userId: o.userId, assign: false })}
+                                  className="ml-0.5 hover:text-red-500"
+                                >×</button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {/* Assign selector */}
+                        {canAssign && unassignedStudents.length > 0 && (
+                          <Select
+                            value=""
+                            onValueChange={(uid) => assignMut.mutate({ slotId: slot.id, userId: uid, assign: true })}
+                          >
+                            <SelectTrigger className="h-7 text-xs">
+                              <SelectValue placeholder="+ Assegna studente" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {unassignedStudents.map((s) => (
+                                <SelectItem key={s.id} value={s.id} className="text-xs">
+                                  {s.name ?? s.username}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-600"
-                        onClick={() => deleteSlotMut.mutate({ slotId: slot.id })}
-                      >
-                        🗑️
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
