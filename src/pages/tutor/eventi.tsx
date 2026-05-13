@@ -23,6 +23,9 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { toast } from "sonner";
+import { Plus, Pencil, Trash2, MapPin, Users, Search, UserPlus, X } from "lucide-react";
+import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import { cn } from "~/lib/utils";
 
 const eventSchema = z.object({
   title: z.string().min(1, "Obbligatorio"),
@@ -162,7 +165,10 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={openCreate}>+ Nuovo evento</Button>
+        <Button onClick={openCreate} className="gap-1.5">
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Nuovo evento
+        </Button>
       </div>
 
       {isLoading && <p className="py-8 text-center text-sm text-gray-500">Caricamento...</p>}
@@ -175,7 +181,7 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
                 <div>
                   <h3 className="font-semibold leading-tight">{event.title}</h3>
                   {event.place && (
-                    <p className="text-xs text-gray-500">📍 {event.place}</p>
+                    <p className="flex items-center gap-1 text-xs text-gray-500"><MapPin className="h-3 w-3" aria-hidden="true" />{event.place}</p>
                   )}
                 </div>
                 {event.hasFeedback && (
@@ -197,14 +203,10 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
                     year: "numeric",
                   })}
                 </span>
-                {event.userLimit && (
-                  <span className="ml-2">
-                    👥 {event._count.participants}/{event.userLimit}
-                  </span>
-                )}
-                {!event.userLimit && (
-                  <span className="ml-2">👥 {event._count.participants}</span>
-                )}
+                <span className="flex items-center gap-1 ml-2">
+                  <Users className="h-3 w-3" aria-hidden="true" />
+                  {event._count.participants}{event.userLimit ? `/${event.userLimit}` : ""}
+                </span>
               </div>
               {event.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
@@ -219,21 +221,23 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 gap-1.5"
                   onClick={() => setManagingId(event.id)}
                 >
+                  <Users className="h-3.5 w-3.5" aria-hidden="true" />
                   Partecipanti
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => openEdit(event)}>
-                  ✏️
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(event)} aria-label="Modifica evento">
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
                 </Button>
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="ghost"
-                  className="text-red-600"
+                  className="h-8 w-8 text-red-600 hover:text-red-700 dark:text-red-400"
                   onClick={() => deleteMut.mutate({ id: event.id })}
+                  aria-label="Elimina evento"
                 >
-                  🗑️
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
             </CardContent>
@@ -355,9 +359,10 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
 
 function ParticipantDialog({ eventId, onClose }: { eventId: string; onClose: () => void }) {
   const utils = api.useUtils();
+  const [search, setSearch] = useState("");
   const { data: event, isLoading } = api.event.getById.useQuery({ id: eventId });
   const { data: rawAllUsers = [] } = api.user.list.useQuery({ role: "STUDENTE" });
-  const allUsers = rawAllUsers as Array<{ id: string; name: string | null; username: string }>;
+  const allUsers = rawAllUsers as Array<{ id: string; name: string | null; username: string; deletedAt: Date | null }>;
 
   const assignMut = api.event.assignParticipant.useMutation({
     onSuccess: () => void utils.event.getById.invalidate({ id: eventId }),
@@ -365,32 +370,159 @@ function ParticipantDialog({ eventId, onClose }: { eventId: string; onClose: () 
   });
 
   const participantIds = new Set(event?.participants.map((p) => p.userId) ?? []);
+  const enrolled = allUsers.filter((u) => participantIds.has(u.id));
+  const lowerSearch = search.toLowerCase();
+  const notEnrolled = allUsers
+    .filter((u) => !participantIds.has(u.id) && !u.deletedAt)
+    .filter((u) =>
+      (u.name ?? "").toLowerCase().includes(lowerSearch) ||
+      u.username.toLowerCase().includes(lowerSearch),
+    );
+
+  const limit = event?.userLimit ?? null;
+  const count = participantIds.size;
+  const isFull = limit !== null && count >= limit;
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+      <DialogContent className="flex max-h-[85vh] max-w-md flex-col">
         <DialogHeader>
-          <DialogTitle>Partecipanti — {event?.title}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" aria-hidden="true" />
+            Partecipanti
+          </DialogTitle>
+          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{event?.title}</p>
         </DialogHeader>
+
         {isLoading ? (
-          <p className="py-4 text-center text-sm">Caricamento...</p>
+          <p className="py-6 text-center text-sm text-gray-500">Caricamento...</p>
         ) : (
-          <div className="space-y-2">
-            <p className="text-xs text-gray-500">
-              {participantIds.size}
-              {event?.userLimit ? `/${event.userLimit}` : ""} iscritti
-            </p>
-            {allUsers.map((u) => (
-              <div key={u.id} className="flex items-center justify-between">
-                <span className="text-sm">{u.name ?? u.username}</span>
-                <Switch
-                  checked={participantIds.has(u.id)}
-                  onCheckedChange={(v) =>
-                    assignMut.mutate({ eventId, userId: u.id, assign: v })
-                  }
-                />
+          <div className="flex flex-1 flex-col gap-3 overflow-hidden">
+            {/* Count + capacity bar */}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  {count}{limit ? `/${limit}` : ""} iscritti
+                </p>
+                {isFull && (
+                  <Badge variant="destructive" className="text-xs">Completo</Badge>
+                )}
               </div>
-            ))}
+              {limit && (
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all",
+                      count / limit >= 1 ? "bg-red-500" : count / limit >= 0.8 ? "bg-orange-400" : "bg-blue-500",
+                    )}
+                    style={{ width: `${Math.min(100, (count / limit) * 100)}%` }}
+                    role="progressbar"
+                    aria-valuenow={count}
+                    aria-valuemax={limit}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Enrolled participants */}
+            {enrolled.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                  Iscritti ({enrolled.length})
+                </p>
+                <div className="space-y-1">
+                  {enrolled.map((u) => {
+                    const initials = (u.name ?? u.username).slice(0, 2).toUpperCase();
+                    return (
+                      <div
+                        key={u.id}
+                        className="flex items-center gap-3 rounded-lg border border-green-100 bg-green-50 px-3 py-2 dark:border-green-800 dark:bg-green-900/20"
+                      >
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarFallback className="bg-green-100 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">
+                            {u.name ?? u.username}
+                          </p>
+                          {u.name && (
+                            <p className="truncate font-mono text-[10px] text-gray-500">@{u.username}</p>
+                          )}
+                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-red-500 hover:text-red-700 dark:text-red-400"
+                          onClick={() => assignMut.mutate({ eventId, userId: u.id, assign: false })}
+                          disabled={assignMut.isPending}
+                          aria-label={`Rimuovi ${u.name ?? u.username}`}
+                        >
+                          <X className="h-3.5 w-3.5" aria-hidden="true" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Add participants */}
+            {!isFull && (
+              <div className="flex flex-1 flex-col gap-2 overflow-hidden">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+                  <Input
+                    placeholder="Aggiungi studente…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 text-sm"
+                    aria-label="Cerca studente da aggiungere"
+                  />
+                </div>
+                <div className="flex-1 overflow-y-auto space-y-1 pr-0.5">
+                  {notEnrolled.map((u) => {
+                    const initials = (u.name ?? u.username).slice(0, 2).toUpperCase();
+                    return (
+                      <button
+                        key={u.id}
+                        onClick={() => assignMut.mutate({ eventId, userId: u.id, assign: true })}
+                        disabled={assignMut.isPending}
+                        className="flex w-full items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 text-left transition-colors hover:border-blue-200 hover:bg-blue-50 dark:border-gray-700 dark:hover:border-blue-700 dark:hover:bg-blue-900/20"
+                      >
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarFallback className="bg-blue-100 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {u.name ?? u.username}
+                          </p>
+                          {u.name && (
+                            <p className="truncate font-mono text-[10px] text-gray-500">@{u.username}</p>
+                          )}
+                        </div>
+                        <UserPlus className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                  {notEnrolled.length === 0 && search && (
+                    <p className="py-4 text-center text-xs text-gray-400">Nessun risultato</p>
+                  )}
+                  {notEnrolled.length === 0 && !search && (
+                    <p className="py-4 text-center text-xs text-gray-400">Tutti gli studenti sono iscritti</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {isFull && (
+              <p className="text-center text-sm text-red-500">
+                Evento al completo — rimuovi partecipanti per aggiungerne altri
+              </p>
+            )}
           </div>
         )}
       </DialogContent>

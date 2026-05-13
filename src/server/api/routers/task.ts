@@ -43,6 +43,12 @@ export const taskRouter = createTRPCRouter({
         slots: {
           include: {
             _count: { select: { occupations: { where: { isActive: true } } } },
+            // Always include student's own active occupation (empty array for tutors/non-occupied)
+            occupations: {
+              where: { userId: user.id, isActive: true },
+              take: 1,
+              select: { id: true, isActive: true },
+            },
           },
           orderBy: { date: "asc" },
         },
