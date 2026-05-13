@@ -135,8 +135,8 @@ const StudentiEventiPage: NextPageWithLayout = function StudentiEventiPage() {
   }));
 
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="lista">
+    <div className="space-y-4 overflow-x-hidden">
+      <Tabs defaultValue="lista" className="w-full">
         <TabsList className="w-full">
           <TabsTrigger value="lista" className="flex-1">Lista</TabsTrigger>
           <TabsTrigger value="calendario" className="flex-1">Calendario</TabsTrigger>

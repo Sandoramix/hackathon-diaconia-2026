@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Head from "next/head";
 import type { ReactNode } from "react";
+import { Sun, Moon } from "lucide-react";
 import { useTheme } from "~/lib/useTheme";
 import { authGradientLight } from "~/styles/gradients";
 
@@ -17,7 +18,7 @@ function DarkToggle() {
       aria-label="Toggle dark mode"
       className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-2 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
     >
-      {isDark ? "☀️" : "🌙"}
+      {isDark ? <Sun className="h-7 w-7" /> : <Moon className="h-7 w-7" />}
     </button>
   );
 }

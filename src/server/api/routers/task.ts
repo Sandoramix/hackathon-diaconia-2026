@@ -2,6 +2,36 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, tutorProcedure } from "~/server/api/trpc";
 
+function expandToTimeSlots(
+  date: Date,
+  windowStart: string,
+  windowEnd: string,
+  durationHours: number,
+  maxOccupants: number,
+): { date: Date; slotStart: Date; slotEnd: Date; maxOccupants: number }[] {
+  const [sh = 0, sm = 0] = windowStart.split(":").map(Number);
+  const [eh = 23, em = 59] = windowEnd.split(":").map(Number);
+
+  const dayStart = new Date(date);
+  dayStart.setHours(sh, sm, 0, 0);
+  const dayEnd = new Date(date);
+  dayEnd.setHours(eh, em, 0, 0);
+
+  const durationMs = durationHours * 60 * 60 * 1000;
+  const result: { date: Date; slotStart: Date; slotEnd: Date; maxOccupants: number }[] = [];
+  let cursor = dayStart.getTime();
+  while (cursor + durationMs <= dayEnd.getTime()) {
+    result.push({
+      date: new Date(cursor),
+      slotStart: new Date(cursor),
+      slotEnd: new Date(cursor + durationMs),
+      maxOccupants,
+    });
+    cursor += durationMs;
+  }
+  return result;
+}
+
 export const taskRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx }) => {
     const user = ctx.session.user;
@@ -61,6 +91,9 @@ export const taskRouter = createTRPCRouter({
         recurrenceDays: z.array(z.number().int().min(0).max(6)).default([]),
         recurrenceWeeks: z.number().int().min(1).max(52).default(4),
         defaultMaxOccupants: z.number().int().min(1).default(1),
+        windowStart: z.string().optional(),
+        windowEnd: z.string().optional(),
+        slotDurationHours: z.number().positive().optional(),
         slots: z.array(
           z.object({
             date: z.date(),
@@ -70,10 +103,16 @@ export const taskRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { slots, recurrenceDays, recurrenceWeeks, defaultMaxOccupants, ...rest } = input;
+      const {
+        slots, recurrenceDays, recurrenceWeeks, defaultMaxOccupants,
+        windowStart, windowEnd, slotDurationHours,
+        ...rest
+      } = input;
 
-      // Auto-generate slots for recurrent tasks
-      const generatedSlots: { date: Date; maxOccupants: number }[] = [];
+      const hasWindow = windowStart && windowEnd && slotDurationHours;
+
+      // Build initial date list for recurrent tasks
+      const recurrentDates: Date[] = [];
       if (rest.type === "RECURRENT" && recurrenceDays.length > 0) {
         const now = new Date();
         now.setHours(9, 0, 0, 0);
@@ -82,18 +121,38 @@ export const taskRouter = createTRPCRouter({
             const d = new Date(now);
             const diff = (day - d.getDay() + 7) % 7 + week * 7;
             d.setDate(d.getDate() + (diff === 0 && week === 0 ? 7 : diff));
-            generatedSlots.push({ date: d, maxOccupants: defaultMaxOccupants });
+            recurrentDates.push(d);
           }
         }
       }
 
-      const allSlots = [...slots, ...generatedSlots];
+      type SlotData = { date: Date; slotStart?: Date; slotEnd?: Date; maxOccupants: number };
+      let allSlots: SlotData[] = [];
+
+      if (hasWindow) {
+        // Expand occasional slots
+        for (const s of slots) {
+          allSlots.push(...expandToTimeSlots(s.date, windowStart, windowEnd, slotDurationHours, s.maxOccupants));
+        }
+        // Expand recurrent slots
+        for (const d of recurrentDates) {
+          allSlots.push(...expandToTimeSlots(d, windowStart, windowEnd, slotDurationHours, defaultMaxOccupants));
+        }
+      } else {
+        allSlots = [
+          ...slots,
+          ...recurrentDates.map((d) => ({ date: d, maxOccupants: defaultMaxOccupants })),
+        ];
+      }
 
       return ctx.db.task.create({
         data: {
           ...rest,
           recurrenceDays,
           recurrenceWeeks,
+          windowStart: windowStart ?? null,
+          windowEnd: windowEnd ?? null,
+          slotDurationHours: slotDurationHours ?? null,
           structureId: ctx.session.user.structureId,
           slots: { create: allSlots },
         },
@@ -111,6 +170,9 @@ export const taskRouter = createTRPCRouter({
         type: z.enum(["OCCASIONAL", "RECURRENT"]).optional(),
         hasFeedback: z.boolean().optional(),
         isCompletable: z.boolean().optional(),
+        windowStart: z.string().optional().nullable(),
+        windowEnd: z.string().optional().nullable(),
+        slotDurationHours: z.number().positive().optional().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -132,7 +194,7 @@ export const taskRouter = createTRPCRouter({
       return ctx.db.task.delete({ where: { id: input.id } });
     }),
 
-  // Tutor: add/remove slots from a task
+  // Tutor: add a slot (or a full day of time-window slots) to a task
   addSlot: tutorProcedure
     .input(
       z.object({
@@ -146,6 +208,18 @@ export const taskRouter = createTRPCRouter({
         where: { id: input.taskId, structureId: ctx.session.user.structureId },
       });
       if (!task) throw new TRPCError({ code: "NOT_FOUND" });
+
+      if (task.windowStart && task.windowEnd && task.slotDurationHours) {
+        const expanded = expandToTimeSlots(
+          input.date,
+          task.windowStart,
+          task.windowEnd,
+          task.slotDurationHours,
+          input.maxOccupants,
+        );
+        return ctx.db.taskSlot.createMany({ data: expanded.map((s) => ({ ...s, taskId: input.taskId })) });
+      }
+
       return ctx.db.taskSlot.create({
         data: { taskId: input.taskId, date: input.date, maxOccupants: input.maxOccupants },
       });
@@ -164,7 +238,7 @@ export const taskRouter = createTRPCRouter({
       return ctx.db.taskSlot.delete({ where: { id: input.slotId } });
     }),
 
-  // Student: occupy/free a slot (creates a log entry, updates isActive)
+  // Student: occupy/free a slot
   toggleOccupation: protectedProcedure
     .input(z.object({ slotId: z.string(), occupy: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
@@ -239,7 +313,7 @@ export const taskRouter = createTRPCRouter({
       }
     }),
 
-  // Student: own history — past events participated + past slots occupied + completed tasks
+  // Student: own history
   myHistory: protectedProcedure.query(async ({ ctx }) => {
     const user = ctx.session.user;
     if (!user.structureId) throw new TRPCError({ code: "FORBIDDEN" });

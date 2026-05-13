@@ -333,7 +333,9 @@ function TaskDetailDialog({
                         >
                           <div>
                             <p className="text-sm font-medium">
-                              {format(new Date(slot.date), "HH:mm")}
+                              {slot.slotStart && slot.slotEnd
+                                ? `${format(new Date(slot.slotStart), "HH:mm")} – ${format(new Date(slot.slotEnd), "HH:mm")}`
+                                : format(new Date(slot.date), "HH:mm")}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                               {activeCount}/{slot.maxOccupants} occupati

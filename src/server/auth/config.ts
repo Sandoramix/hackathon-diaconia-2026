@@ -42,11 +42,13 @@ export const authConfig = {
         const parsed = credentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
+        const username = parsed.data.username?.toLowerCase()?.trim();
+
         const user = await db.user.findFirst({
           where: {
             OR: [
-              { email: parsed.data.username },
-              { username: parsed.data.username },
+              { email: username },
+              { username: username },
             ],
           },
         });

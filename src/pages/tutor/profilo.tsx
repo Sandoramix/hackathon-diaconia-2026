@@ -9,6 +9,7 @@ import { Separator } from "~/components/ui/separator";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { api } from "~/utils/api";
 import { useTheme } from "~/lib/useTheme";
+import { Sun, Moon } from "lucide-react";
 
 const TutorProfiloPage: NextPageWithLayout = function TutorProfiloPage() {
   const { data: session, status } = useSession();
@@ -82,7 +83,7 @@ const TutorProfiloPage: NextPageWithLayout = function TutorProfiloPage() {
           onClick={toggle}
           className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
-          <span className="text-base">{isDark ? "☀️" : "🌙"}</span>
+          {isDark ? <Sun className="h-5 w-5 shrink-0" /> : <Moon className="h-5 w-5 shrink-0" />}
           <span className="flex-1">{isDark ? "Modalità chiara" : "Modalità scura"}</span>
           <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
             {isDark ? "ON" : "OFF"}

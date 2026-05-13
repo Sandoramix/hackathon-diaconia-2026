@@ -55,6 +55,9 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
   const [recurrenceWeeks, setRecurrenceWeeks] = useState(4);
   const [defaultMaxOccupants, setDefaultMaxOccupants] = useState(1);
+  const [windowStart, setWindowStart] = useState("");
+  const [windowEnd, setWindowEnd] = useState("");
+  const [slotDurationHours, setSlotDurationHours] = useState<number | "">("");
 
   useEffect(() => {
     if (status === "unauthenticated") void router.replace("/auth/tipo");
@@ -106,6 +109,9 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
     setRecurrenceDays([]);
     setRecurrenceWeeks(4);
     setDefaultMaxOccupants(1);
+    setWindowStart("");
+    setWindowEnd("");
+    setSlotDurationHours("");
     form.reset({ type: "OCCASIONAL", hasFeedback: true, isCompletable: false });
   }
 
@@ -113,6 +119,9 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
     setEditId(task.id);
     setImage(task.image ?? undefined);
     setRecurrenceDays(task.recurrenceDays ?? []);
+    setWindowStart(task.windowStart ?? "");
+    setWindowEnd(task.windowEnd ?? "");
+    setSlotDurationHours(task.slotDurationHours ?? "");
     form.reset({
       title: task.title,
       description: task.description ?? "",
@@ -138,8 +147,14 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
   }
 
   function onSubmit(data: TaskForm) {
+    const ws = windowStart || undefined;
+    const we = windowEnd || undefined;
+    const sdh = typeof slotDurationHours === "number" ? slotDurationHours : undefined;
     if (editId) {
-      updateMut.mutate({ id: editId, ...data, image: image ?? null });
+      updateMut.mutate({
+        id: editId, ...data, image: image ?? null,
+        windowStart: ws ?? null, windowEnd: we ?? null, slotDurationHours: sdh ?? null,
+      });
     } else {
       createMut.mutate({
         ...data,
@@ -147,6 +162,9 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
         recurrenceDays,
         recurrenceWeeks,
         defaultMaxOccupants,
+        windowStart: ws,
+        windowEnd: we,
+        slotDurationHours: sdh,
         slots: [],
       });
     }
@@ -287,6 +305,64 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
               </div>
             )}
 
+            {/* Time window for slot generation */}
+            {!form.watch("isCompletable") && (
+              <div className="space-y-3 rounded-lg border p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Fascia oraria slot</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Se configurata, ogni giorno viene suddiviso in slot di durata fissa.
+                </p>
+                <div className="flex gap-2 items-end">
+                  <Field label="Inizio">
+                    <Input
+                      type="time"
+                      value={windowStart}
+                      onChange={(e) => setWindowStart(e.target.value)}
+                      className="w-28"
+                    />
+                  </Field>
+                  <Field label="Fine">
+                    <Input
+                      type="time"
+                      value={windowEnd}
+                      onChange={(e) => setWindowEnd(e.target.value)}
+                      className="w-28"
+                    />
+                  </Field>
+                  <Field label="Durata (ore)">
+                    <Input
+                      type="number"
+                      min={0.5}
+                      max={24}
+                      step={0.5}
+                      value={slotDurationHours}
+                      onChange={(e) => setSlotDurationHours(parseFloat(e.target.value) || "")}
+                      className="w-24"
+                      placeholder="es. 2"
+                    />
+                  </Field>
+                </div>
+                {windowStart && windowEnd && slotDurationHours && (
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    → {Math.floor(
+                      (new Date(`1970-01-01T${windowEnd}:00`).getTime() -
+                        new Date(`1970-01-01T${windowStart}:00`).getTime()) /
+                        (slotDurationHours * 3600 * 1000),
+                    )} slot per giorno ({windowStart}–{windowEnd}, ogni {slotDurationHours}h)
+                  </p>
+                )}
+                {(windowStart || windowEnd || slotDurationHours) && (
+                  <button
+                    type="button"
+                    className="text-xs text-red-500 hover:text-red-700"
+                    onClick={() => { setWindowStart(""); setWindowEnd(""); setSlotDurationHours(""); }}
+                  >
+                    Rimuovi fascia
+                  </button>
+                )}
+              </div>
+            )}
+
             <Separator />
             <div className="flex items-center gap-2">
               <Controller
@@ -331,6 +407,8 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
   const [newDate, setNewDate] = useState("");
   const [maxOccupants, setMaxOccupants] = useState(1);
 
+  const hasWindow = !!(task?.windowStart && task?.windowEnd && task?.slotDurationHours);
+
   const addSlotMut = api.task.addSlot.useMutation({
     onSuccess: () => {
       void utils.task.getById.invalidate({ id: taskId });
@@ -355,6 +433,13 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
     }
   }
 
+  function formatSlotLabel(slot: NonNullable<typeof task>["slots"][0]) {
+    if (slot.slotStart && slot.slotEnd) {
+      return `${format(new Date(slot.slotStart), "HH:mm")} – ${format(new Date(slot.slotEnd), "HH:mm")}`;
+    }
+    return format(new Date(slot.date), "HH:mm");
+  }
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
@@ -365,9 +450,15 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
           <p className="py-4 text-center text-sm">Caricamento...</p>
         ) : (
           <div className="space-y-4">
+            {hasWindow && (
+              <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2">
+                Fascia {task!.windowStart}–{task!.windowEnd}, {task!.slotDurationHours}h per slot.
+                Aggiungi un giorno per generare tutti gli slot automaticamente.
+              </p>
+            )}
             <div className="flex gap-2">
               <Input
-                type="datetime-local"
+                type={hasWindow ? "date" : "datetime-local"}
                 value={newDate}
                 onChange={(e) => setNewDate(e.target.value)}
                 className="flex-1"
@@ -382,7 +473,9 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
               />
               <Button
                 onClick={() => {
-                  if (newDate) addSlotMut.mutate({ taskId, date: new Date(newDate), maxOccupants });
+                  if (!newDate) return;
+                  const d = hasWindow ? new Date(newDate + "T12:00:00") : new Date(newDate);
+                  addSlotMut.mutate({ taskId, date: d, maxOccupants });
                 }}
                 disabled={!newDate || addSlotMut.isPending}
               >
@@ -392,15 +485,15 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
             <Separator />
             {Object.entries(slotsByDate).map(([dateKey, slots]) => (
               <div key={dateKey}>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">
                   {format(new Date(dateKey), "EEEE d MMMM")}
                 </p>
                 <div className="space-y-1.5">
                   {slots.map((slot) => (
-                    <div key={slot.id} className="flex items-center justify-between rounded-md border p-2">
+                    <div key={slot.id} className="flex items-center justify-between rounded-md border dark:border-gray-700 p-2">
                       <div>
-                        <p className="text-sm font-medium">{format(new Date(slot.date), "HH:mm")}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm font-medium">{formatSlotLabel(slot)}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {slot._count.occupations}/{slot.maxOccupants} occupati
                         </p>
                       </div>

@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import { getAuthHeaderLayout } from "~/layouts/AuthHeaderLayout";
 import type { NextPageWithLayout } from "../_app";
-import {ArrowLeft} from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import {UserIconBtn} from "~/components/icons/UserIconBtn";
 import {TutorIconBtn} from "~/components/icons/TutorIconBtn";
 import {Button} from "~/components/ui/button";
@@ -24,13 +24,14 @@ const AccediPage: NextPageWithLayout = function AccediPage() {
   const router = useRouter();
   const tipo = (router.query.tipo as string) ?? "studente";
   const [error, setError] = useState<string | null>(null);
+  const [showPw, setShowPw] = useState(false);
 
   const form = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: { role: tipo?.toLowerCase()?.trim() === "studente" ? "studente" : "tutor" } });
 
   async function onSubmit(data: FormData) {
     setError(null);
     const result = await signIn("credentials", {
-      username: data.username,
+      username: data.username?.trim()?.toLowerCase(),
       password: data.password,
       redirect: false,
       role: data.role,
@@ -92,13 +93,23 @@ const AccediPage: NextPageWithLayout = function AccediPage() {
           <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-200">
             Password*
           </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            className="flex h-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-gray-100 outline-none transition focus:border-[#1e3eb0] focus:ring-2 focus:ring-[#1e3eb0]/20 disabled:opacity-50"
-            {...form.register("password")}
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPw ? "text" : "password"}
+              autoComplete="current-password"
+              className="flex h-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 pr-10 text-sm dark:text-gray-100 outline-none transition focus:border-[#1e3eb0] focus:ring-2 focus:ring-[#1e3eb0]/20 disabled:opacity-50"
+              {...form.register("password")}
+            />
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowPw((s) => !s)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           {form.formState.errors.password && (
             <p className="text-xs text-red-600">Campo obbligatorio</p>
           )}

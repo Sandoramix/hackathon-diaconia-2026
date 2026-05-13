@@ -37,6 +37,24 @@ import {
 } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
+
+function PasswordInput(props: React.ComponentProps<typeof Input>) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <Input {...props} type={show ? "text" : "password"} className="pr-10" />
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={() => setShow((s) => !s)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+}
 
 const createSchema = z.object({
   username: z.string().min(3, "Min 3 caratteri"),
@@ -196,7 +214,7 @@ const UtentiPage: NextPageWithLayout = function UtentiPage() {
               )}
             </FormRow>
             <FormRow label="Password*">
-              <Input type="password" {...createForm.register("password")} />
+              <PasswordInput {...createForm.register("password")} />
             </FormRow>
             <FormRow label="Tipo">
               <Select
@@ -269,7 +287,7 @@ const UtentiPage: NextPageWithLayout = function UtentiPage() {
               </p>
             </FormRow>
             <FormRow label="Password template*">
-              <Input type="password" {...bulkForm.register("passwordTemplate")} />
+              <PasswordInput {...bulkForm.register("passwordTemplate")} />
             </FormRow>
             <div className="flex items-center gap-2">
               <Switch
@@ -360,16 +378,12 @@ function UserTable({
             </TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-1">
-                {!u.deletedAt && (
-                  <Button size="sm" variant="ghost" onClick={() => onStorico(u.id)}>
-                    Storico
-                  </Button>
-                )}
-                {!u.deletedAt && (
-                  <Button size="sm" variant="ghost" onClick={() => onEdit(u.id)}>
-                    Modifica
-                  </Button>
-                )}
+                <Button size="sm" variant="ghost" onClick={() => onStorico(u.id)}>
+                  Storico
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => onEdit(u.id)}>
+                  Modifica
+                </Button>
                 {u.deletedAt ? (
                   <Button size="sm" variant="ghost" onClick={() => onRestore(u.id)}>
                     Ripristina
@@ -467,7 +481,7 @@ function EditUserDialog({ userId, onClose }: { userId: string; onClose: () => vo
               <Textarea rows={2} {...form.register("familyContacts")} />
             </FormRow>
             <FormRow label="Nuova password (opzionale)">
-              <Input type="password" {...form.register("newPassword")} />
+              <PasswordInput {...form.register("newPassword")} />
             </FormRow>
             <div className="flex items-center gap-2">
               <Switch

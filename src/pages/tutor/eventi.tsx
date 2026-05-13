@@ -169,7 +169,7 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {events.map((event) => (
-          <Card key={event.id} className="flex flex-col">
+          <Card key={event.id} className="flex flex-col min-w-0">
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between gap-2">
                 <div>

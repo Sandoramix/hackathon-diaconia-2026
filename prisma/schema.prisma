@@ -169,15 +169,18 @@ enum TaskType {
 }
 
 model Task {
-  id              String   @id @default(cuid())
-  title           String
-  description     String?  @db.Text
-  image           String?  @db.Text
-  type            TaskType @default(OCCASIONAL)
-  hasFeedback     Boolean  @default(false)
-  isCompletable   Boolean  @default(false)
-  recurrenceDays  Int[]    @default([])
-  recurrenceWeeks Int      @default(4)
+  id                String   @id @default(cuid())
+  title             String
+  description       String?  @db.Text
+  image             String?  @db.Text
+  type              TaskType @default(OCCASIONAL)
+  hasFeedback       Boolean  @default(false)
+  isCompletable     Boolean  @default(false)
+  recurrenceDays    Int[]    @default([])
+  recurrenceWeeks   Int      @default(4)
+  windowStart       String?
+  windowEnd         String?
+  slotDurationHours Float?
 
   structureId String
   structure   Structure @relation(fields: [structureId], references: [id])
@@ -202,11 +205,13 @@ model TaskCompletion {
 }
 
 model TaskSlot {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   taskId       String
-  task         Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task         Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
   date         DateTime
-  maxOccupants Int      @default(1)
+  slotStart    DateTime?
+  slotEnd      DateTime?
+  maxOccupants Int       @default(1)
 
   occupations TaskSlotOccupation[]
 
