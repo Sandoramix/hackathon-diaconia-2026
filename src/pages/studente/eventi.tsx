@@ -66,8 +66,8 @@ function DateStrip({
               isSelected
                 ? "bg-blue-600 text-white"
                 : isToday
-                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50",
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 border border-blue-200 dark:border-blue-700"
+                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700",
             )}
           >
             <span className="text-[10px] font-medium uppercase">
@@ -154,7 +154,7 @@ const StudentiEventiPage: NextPageWithLayout = function StudentiEventiPage() {
           {isLoading && <Skeleton className="h-20 w-full" />}
 
           {!isLoading && filteredEvents.length === 0 && (
-            <p className="py-8 text-center text-sm text-gray-500">
+            <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
               Nessun evento il {format(selectedDate, "d MMMM")}
             </p>
           )}
@@ -170,7 +170,7 @@ const StudentiEventiPage: NextPageWithLayout = function StudentiEventiPage() {
               <button
                 key={event.id}
                 onClick={() => setDetailId(event.id)}
-                className="flex w-full items-start gap-3 rounded-xl border border-gray-200 bg-white p-3 text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
+                className="flex w-full items-start gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 text-left hover:border-blue-200 dark:hover:border-blue-700 hover:bg-blue-50/30 dark:hover:bg-blue-900/20 transition-colors"
               >
                 {event.image && (
                   <img
@@ -183,11 +183,11 @@ const StudentiEventiPage: NextPageWithLayout = function StudentiEventiPage() {
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-semibold text-sm leading-tight">{event.title}</p>
                     {isRegistered && (
-                      <Badge className="shrink-0 bg-green-100 text-green-800 border-green-200 text-xs">✓</Badge>
+                      <Badge className="shrink-0 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700 text-xs">✓</Badge>
                     )}
                   </div>
-                  {event.place && <p className="text-xs text-gray-500 mt-0.5">📍 {event.place}</p>}
-                  <p className="text-xs text-gray-400 mt-1">
+                  {event.place && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">📍 {event.place}</p>}
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                     {format(new Date(event.startDate), "HH:mm")} — {format(new Date(event.endDate), "HH:mm")}
                   </p>
                   {isFull && (
@@ -281,12 +281,12 @@ function EventDetailDialog({
               <DialogTitle>{event.title}</DialogTitle>
             </DialogHeader>
             <div className="space-y-2 text-sm">
-              {event.place && <p className="text-gray-600">📍 {event.place}</p>}
-              <p className="text-gray-600">
+              {event.place && <p className="text-gray-600 dark:text-gray-300">📍 {event.place}</p>}
+              <p className="text-gray-600 dark:text-gray-300">
                 📅 {format(new Date(event.startDate), "d MMM yyyy · HH:mm")} — {format(new Date(event.endDate), "HH:mm")}
               </p>
               {event.userLimit && (
-                <p className="text-gray-600">👥 {event._count.participants}/{event.userLimit} posti</p>
+                <p className="text-gray-600 dark:text-gray-300">👥 {event._count.participants}/{event.userLimit} posti</p>
               )}
               {event.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
@@ -298,7 +298,7 @@ function EventDetailDialog({
               {event.description && (
                 <>
                   <Separator />
-                  <p className="text-gray-700 whitespace-pre-line">{event.description}</p>
+                  <p className="text-gray-700 dark:text-gray-200 whitespace-pre-line">{event.description}</p>
                 </>
               )}
             </div>

@@ -70,22 +70,22 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
 
           {/* Past Events */}
           <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
               📅 Eventi completati ({history?.pastEvents.length ?? 0})
             </h2>
             <div className="space-y-2">
               {history?.pastEvents.length === 0 && (
-                <p className="text-sm text-gray-500">Nessun evento</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Nessun evento</p>
               )}
               {history?.pastEvents.map((e: { id: string; title: string; startDate: Date; endDate: Date; description: string | null; image: string | null; place: string | null; tags: { id: string; name: string }[] }) => (
-                <div key={e.id} className="flex items-start gap-3 rounded-xl border bg-white p-3">
+                <div key={e.id} className="flex items-start gap-3 rounded-xl border bg-white dark:bg-gray-800 p-3">
                   {e.image && (
                     <img src={e.image} alt={e.title} className="h-12 w-12 rounded-lg object-cover shrink-0" />
                   )}
                   <div>
                     <p className="font-semibold text-sm">{e.title}</p>
-                    {e.place && <p className="text-xs text-gray-500">📍 {e.place}</p>}
-                    <p className="text-xs text-gray-400">
+                    {e.place && <p className="text-xs text-gray-500 dark:text-gray-400">📍 {e.place}</p>}
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       {format(new Date(e.startDate), "d MMM yyyy")}
                     </p>
                     {e.tags.length > 0 && (
@@ -103,21 +103,21 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
 
           {/* Past Slot Occupations */}
           <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
               ✅ Slot occupati ({history?.pastSlotOccupations.length ?? 0})
             </h2>
             <div className="space-y-2">
               {history?.pastSlotOccupations.length === 0 && (
-                <p className="text-sm text-gray-500">Nessuno slot</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Nessuno slot</p>
               )}
               {history?.pastSlotOccupations.map((o: { id: string; slot: { date: Date; task: { id: string; title: string; image: string | null } } }) => (
-                <div key={o.id} className="flex items-center gap-3 rounded-xl border bg-white p-3">
+                <div key={o.id} className="flex items-center gap-3 rounded-xl border bg-white dark:bg-gray-800 p-3">
                   {o.slot.task.image && (
                     <img src={o.slot.task.image} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
                   )}
                   <div>
                     <p className="font-semibold text-sm">{o.slot.task.title}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       {format(new Date(o.slot.date), "d MMM yyyy · HH:mm")}
                     </p>
                   </div>
@@ -132,22 +132,22 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
           {/* Manually Completed Tasks */}
           {(history?.completedTasks.length ?? 0) > 0 && (
             <section>
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                 🏁 Task completati manualmente ({history?.completedTasks.length})
               </h2>
               <div className="space-y-2">
                 {history?.completedTasks.map((c: { id: string; taskId: string; completedAt: Date; task: { id: string; title: string; description: string | null; image: string | null } }) => (
-                  <div key={c.id} className="flex items-center gap-3 rounded-xl border bg-white p-3">
+                  <div key={c.id} className="flex items-center gap-3 rounded-xl border bg-white dark:bg-gray-800 p-3">
                     {c.task.image && (
                       <img src={c.task.image} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
                     )}
                     <div>
                       <p className="font-semibold text-sm">{c.task.title}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         Completato il {format(new Date(c.completedAt), "d MMM yyyy")}
                       </p>
                     </div>
-                    <Badge className="ml-auto bg-green-100 text-green-800 border-green-200 text-xs shrink-0">
+                    <Badge className="ml-auto bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700 text-xs shrink-0">
                       ✓
                     </Badge>
                   </div>
@@ -159,7 +159,7 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
 
         {/* ── Calendario ── */}
         <TabsContent value="calendario" className="pt-3">
-          <div className="mb-3 flex gap-3 text-xs text-gray-500">
+          <div className="mb-3 flex gap-3 text-xs text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-gray-400" /> Evento</span>
             <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-purple-600" /> Slot task</span>
             <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600" /> Completato</span>

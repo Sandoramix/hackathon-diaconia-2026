@@ -33,20 +33,20 @@ const StudenteRegolePage: NextPageWithLayout = function StudenteRegolePage() {
         </div>
       )}
       {structure?.rules.length === 0 && (
-        <p className="py-12 text-center text-sm text-gray-500">Nessuna regola definita</p>
+        <p className="py-12 text-center text-sm text-gray-500 dark:text-gray-400">Nessuna regola definita</p>
       )}
       <div className="space-y-3">
         {structure?.rules.map((rule, i) => (
           <div
             key={rule.id}
-            className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-4"
+            className="flex items-start gap-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4"
           >
             <span className="text-2xl leading-none">{rule.icon}</span>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                 Regola {i + 1}
               </p>
-              <p className="mt-0.5 text-sm text-gray-800">{rule.text}</p>
+              <p className="mt-0.5 text-sm text-gray-800 dark:text-gray-100">{rule.text}</p>
             </div>
           </div>
         ))}
