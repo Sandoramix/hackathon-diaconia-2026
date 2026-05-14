@@ -189,7 +189,7 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
 
       {isLoading && <p className="py-8 text-center text-sm text-gray-500">Caricamento...</p>}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 justify-center [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
         {events.map((event) => (
           <Card key={event.id} className="flex flex-col min-w-0">
             <CardHeader className="pb-2">

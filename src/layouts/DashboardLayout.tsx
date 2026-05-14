@@ -143,7 +143,7 @@ export default function DashboardLayout({ children, title, noPadding, wide }: Da
           </main>
         ) : (
           <main id="main-content" className="flex-1 overflow-y-auto pb-20">
-            <div className={cn("mx-auto px-4 py-4", wide ? "max-w-4xl" : "max-w-2xl")}>{children}</div>
+            <div className={cn("mx-auto px-4 py-4", wide ? "max-w-6xl" : "max-w-2xl")}>{children}</div>
           </main>
         )}
 
