@@ -145,6 +145,20 @@ export const ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
   ICON_LIST.map(({ name, Icon }) => [name, Icon]),
 );
 
+export interface CompositeIconEntry {
+  name: string;
+  icon: string;
+  keywords: string[];
+}
+
+export const COMPOSITE_ICON_LIST: CompositeIconEntry[] = [
+  { name: "No fumo",   icon: "composite:Cigarette,Ban:red",  keywords: ["fumo", "sigaretta", "vietato fumare"] },
+  { name: "No droghe", icon: "composite:Syringe,Ban:red",    keywords: ["droga", "siringa", "sostanze"] },
+  { name: "No alcol",  icon: "composite:Wine,Ban:red",       keywords: ["alcol", "vino", "bevanda alcolica"] },
+  { name: "No ospiti", icon: "composite:Users,Ban:red",      keywords: ["ospiti", "persone esterne", "visitatori"] },
+  { name: "Rientro",   icon: "composite:Home,Clock:orange",  keywords: ["casa", "rientro", "struttura", "orario"] },
+];
+
 export const ICON_COLORS = [
   { name: "gray",    label: "Predefinito", textColor: "text-gray-500", darkTextColor: "dark:text-gray-400", bgColor: "bg-gray-500", darkBgColor: "dark:bg-gray-400" },
   { name: "red",     label: "Rosso",       textColor: "text-red-600", darkTextColor: "dark:text-red-400", bgColor: "bg-red-600", darkBgColor: "dark:bg-red-400" },

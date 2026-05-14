@@ -26,6 +26,7 @@ import { cn } from "~/lib/utils";
 import {
   ICON_LIST,
   ICON_COLORS,
+  COMPOSITE_ICON_LIST,
   buildLucideIcon,
   parseLucideIcon,
   type IconColorName,
@@ -46,27 +47,38 @@ const ruleSchema = z.object({
 
 type RuleForm = z.infer<typeof ruleSchema>;
 
-/** Icon picker for Lucide icons with search + color selection */
+/** Icon picker for Lucide icons (single + composite) with search + color selection */
 function LucideIconPicker({
-  selectedIcon,
-  selectedColor,
+  selectedIconString,
   onSelect,
 }: {
-  selectedIcon: string;
-  selectedColor: IconColorName;
-  onSelect: (name: string, color: IconColorName) => void;
+  selectedIconString: string;
+  onSelect: (iconString: string) => void;
 }) {
   const [iconSearch, setIconSearch] = useState("");
-  const [color, setColor] = useState<IconColorName>(selectedColor);
 
-  const filtered = ICON_LIST.filter((e) => {
-    const q = iconSearch.toLowerCase();
-    return e.name.toLowerCase().includes(q) || e.keywords.some((k) => k.includes(q));
-  });
+  const parsed = selectedIconString ? parseLucideIcon(selectedIconString) : null;
+  const [color, setColor] = useState<IconColorName>(parsed?.type === "lucide" ? parsed.color : "gray");
+
+  useEffect(() => {
+    const p = selectedIconString ? parseLucideIcon(selectedIconString) : null;
+    setColor(p?.type === "lucide" ? p.color : "gray");
+  }, [selectedIconString]);
+
+  const selectedSingleName = parsed?.type === "lucide" ? parsed.name : "";
+  const selectedCompositeIcon = parsed?.type === "composite" ? selectedIconString : "";
+
+  const q = iconSearch.toLowerCase();
+  const filtered = ICON_LIST.filter(
+    (e) => e.name.toLowerCase().includes(q) || e.keywords.some((k) => k.includes(q)),
+  );
+  const filteredComposites = COMPOSITE_ICON_LIST.filter(
+    (e) => e.name.toLowerCase().includes(q) || e.keywords.some((k) => k.includes(q)),
+  );
 
   return (
     <div className="space-y-3">
-      {/* Color picker */}
+      {/* Color picker — only meaningful for single icons */}
       <div>
         <p className="mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">Colore icona</p>
         <div className="flex flex-wrap gap-2">
@@ -76,7 +88,7 @@ function LucideIconPicker({
               type="button"
               onClick={() => {
                 setColor(c.name);
-                if (selectedIcon) onSelect(selectedIcon, c.name);
+                if (selectedSingleName) onSelect(buildLucideIcon(selectedSingleName, c.name));
               }}
               aria-label={c.label}
               aria-pressed={color === c.name}
@@ -87,13 +99,7 @@ function LucideIconPicker({
                   : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700",
               )}
             >
-              <span
-                className={cn(
-                  "h-3.5 w-3.5 rounded-full flex items-center justify-center",
-                  c.bgColor,
-                  c.darkBgColor,
-                )}
-              />
+              <span className={cn("h-3.5 w-3.5 rounded-full", c.bgColor, c.darkBgColor)} />
               {c.label}
             </button>
           ))}
@@ -118,21 +124,50 @@ function LucideIconPicker({
         role="listbox"
         aria-label="Icone disponibili"
       >
+        {/* Composite icons */}
+        {filteredComposites.map((entry) => (
+          <button
+            key={entry.icon}
+            type="button"
+            role="option"
+            aria-selected={selectedCompositeIcon === entry.icon}
+            aria-label={entry.name}
+            title={`${entry.name} — ${entry.keywords.join(", ")}`}
+            onClick={() => onSelect(entry.icon)}
+            className={cn(
+              "flex flex-col items-center justify-center gap-0.5 rounded-xl p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+              selectedCompositeIcon === entry.icon
+                ? "bg-blue-100 dark:bg-blue-900/40 ring-2 ring-blue-500"
+                : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700",
+            )}
+          >
+            <RenderIcon icon={entry.icon} size={20} aria-hidden="true" />
+            <span className="text-xs text-gray-400 truncate w-full text-center leading-tight">
+              {entry.name}
+            </span>
+          </button>
+        ))}
+
+        {/* Divider between composite and single */}
+        {filteredComposites.length > 0 && filtered.length > 0 && (
+          <div className="col-span-6 my-0.5 border-t border-gray-200 dark:border-gray-700" />
+        )}
+
+        {/* Single icons */}
         {filtered.map((entry) => {
-          const isSelected = selectedIcon === entry.name;
           const colorClasses = ICON_COLORS.find((c) => c.name === color);
           return (
             <button
               key={entry.name}
               type="button"
               role="option"
-              aria-selected={isSelected}
+              aria-selected={entry.name === selectedSingleName}
               aria-label={entry.name}
               title={`${entry.name} — ${entry.keywords.join(", ")}`}
-              onClick={() => onSelect(entry.name, color)}
+              onClick={() => onSelect(buildLucideIcon(entry.name, color))}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 rounded-xl p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-                isSelected
+                entry.name === selectedSingleName
                   ? "bg-blue-100 dark:bg-blue-900/40 ring-2 ring-blue-500"
                   : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700",
               )}
@@ -148,7 +183,8 @@ function LucideIconPicker({
             </button>
           );
         })}
-        {filtered.length === 0 && (
+
+        {filtered.length === 0 && filteredComposites.length === 0 && (
           <p className="col-span-6 py-4 text-center text-xs text-gray-400">Nessuna icona trovata</p>
         )}
       </div>
@@ -163,8 +199,6 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [lucideIconName, setLucideIconName] = useState("");
-  const [lucideColor, setLucideColor] = useState<IconColorName>("gray");
   const [iconTab, setIconTab] = useState<"emoji" | "lucide">("emoji");
 
   useEffect(() => {
@@ -211,14 +245,10 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
     form.reset({ icon: rule.icon, text: rule.text });
     // Detect icon type
     const parsed = parseLucideIcon(rule.icon);
-    if (parsed.type === "lucide") {
+    if (parsed.type === "lucide" || parsed.type === "composite") {
       setIconTab("lucide");
-      setLucideIconName(parsed.name);
-      setLucideColor(parsed.color);
     } else {
       setIconTab("emoji");
-      setLucideIconName("");
-      setLucideColor("gray");
     }
     setShowForm(true);
   }
@@ -227,8 +257,6 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
     setEditId(null);
     form.reset({ icon: "", text: "" });
     setIconTab("emoji");
-    setLucideIconName("");
-    setLucideColor("gray");
     setShowForm(true);
   }
 
@@ -236,8 +264,6 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
     setShowForm(false);
     setEditId(null);
     form.reset({ icon: "", text: "" });
-    setLucideIconName("");
-    setLucideColor("gray");
   }
 
   function handleDelete(id: string) {
@@ -360,8 +386,11 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
                 <TabsContent value="emoji" className="space-y-2 pt-2">
                   <Input
                     placeholder="Scrivi o incolla un'emoji…"
-                    value={watchedIcon.startsWith("lucide:") ? "" : watchedIcon}
-                    onChange={(e) => form.setValue("icon", e.target.value, { shouldValidate: true })}
+                    value={watchedIcon.startsWith("lucide:") || watchedIcon.startsWith("composite:") ? "" : watchedIcon}
+                    onChange={(e) => {
+                      const first = [...e.target.value][0] ?? "";
+                      form.setValue("icon", first, { shouldValidate: true });
+                    }}
                     className="font-mono"
                   />
                   <div className="grid grid-cols-8 gap-1" role="group" aria-label="Emoji predefinite">
@@ -388,12 +417,9 @@ const RegolePage: NextPageWithLayout = function RegolePage() {
                 {/* Lucide icon tab */}
                 <TabsContent value="lucide" className="pt-2">
                   <LucideIconPicker
-                    selectedIcon={lucideIconName}
-                    selectedColor={lucideColor}
-                    onSelect={(name, color) => {
-                      setLucideIconName(name);
-                      setLucideColor(color);
-                      form.setValue("icon", buildLucideIcon(name, color), { shouldValidate: true });
+                    selectedIconString={watchedIcon}
+                    onSelect={(iconString) => {
+                      form.setValue("icon", iconString, { shouldValidate: true });
                     }}
                   />
                 </TabsContent>
