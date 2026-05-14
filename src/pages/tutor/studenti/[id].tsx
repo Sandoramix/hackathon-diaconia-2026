@@ -21,7 +21,13 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Download } from "lucide-react";
+import { ChevronDown, Download, FileSpreadsheet, FileText } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 
 function exportToCSV(
   entries: { date: Date | string; type: string; title: string; description: string }[],
@@ -61,6 +67,77 @@ function exportToCSV(
   URL.revokeObjectURL(url);
 }
 
+async function exportToPDF(
+  entries: { date: Date | string; type: string; title: string; description: string }[],
+  student: { name: string | null; username: string },
+  filterLabel: string,
+) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+
+  const TYPE_LABELS_EXPORT: Record<string, string> = {
+    event: "Evento",
+    slot: "Slot task",
+    task_complete: "Completato",
+    feedback: "Feedback",
+    note: "Nota tutor",
+  };
+
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Storico Attivita", 14, 18);
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(80);
+  doc.text(`Studente: ${student.name ?? student.username} (@${student.username})`, 14, 27);
+  doc.text(`Generato il: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 33);
+  if (filterLabel) doc.text(`Filtri: ${filterLabel}`, 14, 39);
+  doc.setTextColor(0);
+
+  const startY = filterLabel ? 46 : 40;
+
+  const rows = entries.map((e) => [
+    format(new Date(e.date), "dd/MM/yyyy"),
+    format(new Date(e.date), "HH:mm"),
+    TYPE_LABELS_EXPORT[e.type] ?? e.type,
+    e.title,
+    e.description,
+  ]);
+
+  autoTable(doc, {
+    head: [["Data", "Ora", "Tipo", "Titolo", "Descrizione"]],
+    body: rows,
+    startY,
+    theme: "striped",
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
+    columnStyles: {
+      0: { cellWidth: 22 },
+      1: { cellWidth: 12 },
+      2: { cellWidth: 26 },
+      3: { cellWidth: 45 },
+      4: { cellWidth: "auto" },
+    },
+  });
+
+  // Page numbers
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(150);
+    doc.text(`Pagina ${i} di ${pageCount}`, pageWidth / 2, pageHeight - 8, { align: "center" });
+    doc.setTextColor(0);
+  }
+
+  doc.save(`storico_${student.username}_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+}
+
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   event:         { label: "Evento",      color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" },
   slot:          { label: "Slot task",   color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" },
@@ -91,21 +168,50 @@ const StudentStorico: NextPageWithLayout = function StudentStorico() {
 
   const utils = api.useUtils();
 
-  const handleExport = async () => {
+  const TYPE_FILTER_LABELS: Record<string, string> = {
+    event: "Evento", slot: "Slot task", task_complete: "Completato",
+    feedback: "Feedback", note: "Nota tutor",
+  };
+
+  const buildFilterLabel = () => {
+    const parts: string[] = [];
+    if (typeFilter !== "all") parts.push(`Tipo: ${TYPE_FILTER_LABELS[typeFilter] ?? typeFilter}`);
+    if (dateFrom) parts.push(`Da: ${dateFrom}`);
+    if (dateTo) parts.push(`A: ${dateTo}`);
+    return parts.join(" · ");
+  };
+
+  const fetchExportData = async () => {
+    return utils.history.exportForStudent.fetch({
+      studentId,
+      type: typeFilter !== "all" ? (typeFilter as "event" | "slot" | "task_complete" | "feedback" | "note") : undefined,
+      dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+      dateTo: dateTo ? new Date(dateTo) : undefined,
+    });
+  };
+
+  const handleExportCSV = async () => {
     if (!studentId) return;
     setExporting(true);
     try {
-      const result = await utils.history.exportForStudent.fetch({
-        studentId,
-        type: typeFilter !== "all" ? (typeFilter as "event" | "slot" | "task_complete" | "feedback" | "note") : undefined,
-        dateFrom: dateFrom ? new Date(dateFrom) : undefined,
-        dateTo: dateTo ? new Date(dateTo) : undefined,
-      });
-      if (result.entries.length === 0) {
-        toast.info("Nessuna voce da esportare");
-        return;
-      }
+      const result = await fetchExportData();
+      if (result.entries.length === 0) { toast.info("Nessuna voce da esportare"); return; }
       exportToCSV(result.entries, result.student);
+      toast.success(`Esportate ${result.entries.length} voci`);
+    } catch {
+      toast.error("Errore durante l'esportazione");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!studentId) return;
+    setExporting(true);
+    try {
+      const result = await fetchExportData();
+      if (result.entries.length === 0) { toast.info("Nessuna voce da esportare"); return; }
+      await exportToPDF(result.entries, result.student, buildFilterLabel());
       toast.success(`Esportate ${result.entries.length} voci`);
     } catch {
       toast.error("Errore durante l'esportazione");
@@ -185,16 +291,25 @@ const StudentStorico: NextPageWithLayout = function StudentStorico() {
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">@{data.student.username}</p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleExport}
-            disabled={exporting}
-            className="gap-1.5 shrink-0"
-          >
-            <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            {exporting ? "Esportazione..." : "Esporta CSV"}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" disabled={exporting} className="gap-1.5 shrink-0">
+                <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                {exporting ? "Esportazione..." : "Esporta"}
+                <ChevronDown className="h-3 w-3" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportCSV} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
+                CSV (Excel)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF} className="gap-2">
+                <FileText className="h-4 w-4" aria-hidden="true" />
+                PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
 
