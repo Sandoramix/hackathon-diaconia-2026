@@ -10,6 +10,7 @@ import type { NextPageWithLayout } from "../_app";
 import { api } from "~/utils/api";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { DateTimePicker } from "~/components/ui/date-time-picker";
 import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
 import { Textarea } from "~/components/ui/textarea";
@@ -440,10 +441,12 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Data inizio*">
-                <Input type="datetime-local" {...form.register("startDate")} />
+                <Controller control={form.control} name="startDate"
+                  render={({ field }) => <DateTimePicker value={field.value ?? ""} onChange={field.onChange} />} />
               </Field>
               <Field label="Data fine*">
-                <Input type="datetime-local" {...form.register("endDate")} />
+                <Controller control={form.control} name="endDate"
+                  render={({ field }) => <DateTimePicker value={field.value ?? ""} onChange={field.onChange} />} />
               </Field>
             </div>
             <Field label="Limite studenti (opzionale)">

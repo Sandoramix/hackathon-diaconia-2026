@@ -7,6 +7,7 @@ import { api } from "~/utils/api";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Input } from "~/components/ui/input";
+import { DatePicker } from "~/components/ui/date-time-picker";
 import {
   Select,
   SelectContent,
@@ -104,18 +105,8 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
                 <SelectItem value="task_complete">Completato</SelectItem>
               </SelectContent>
             </Select>
-            <Input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="w-36 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-            />
-            <Input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="w-36 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-            />
+            <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Da" className="w-36" />
+            <DatePicker value={dateTo} onChange={setDateTo} placeholder="A" className="w-36" />
             {(typeFilter !== "all" || dateFrom || dateTo) && (
               <Button variant="ghost" size="sm" onClick={() => { setTypeFilter("all"); setDateFrom(""); setDateTo(""); }}>
                 Reset

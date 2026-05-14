@@ -10,6 +10,7 @@ import type { NextPageWithLayout } from "../_app";
 import { api } from "~/utils/api";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { DateTimePicker, TimePicker } from "~/components/ui/date-time-picker";
 import { Pencil, Trash2, Settings2, Loader2, Copy, Plus, Tag } from "lucide-react";
 import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
@@ -327,10 +328,9 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
               <div className="space-y-3 rounded-lg border p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Programmazione</p>
                 <Field label="Data e ora attività">
-                  <Input
-                    type="datetime-local"
+                  <DateTimePicker
                     value={occasionalDate}
-                    onChange={(e) => setOccasionalDate(e.target.value)}
+                    onChange={setOccasionalDate}
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Se hai una fascia oraria configurata, viene espansa automaticamente in slot.
@@ -409,20 +409,10 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
                 </p>
                 <div className="flex gap-2 items-end">
                   <Field label="Inizio">
-                    <Input
-                      type="time"
-                      value={windowStart}
-                      onChange={(e) => setWindowStart(e.target.value)}
-                      className="w-28"
-                    />
+                    <TimePicker value={windowStart} onChange={setWindowStart} className="w-28" />
                   </Field>
                   <Field label="Fine">
-                    <Input
-                      type="time"
-                      value={windowEnd}
-                      onChange={(e) => setWindowEnd(e.target.value)}
-                      className="w-28"
-                    />
+                    <TimePicker value={windowEnd} onChange={setWindowEnd} className="w-28" />
                   </Field>
                   <Field label="Durata (ore)">
                     <Input
@@ -652,21 +642,11 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
               <div className="flex gap-2 items-end flex-wrap">
                 <div className="space-y-1">
                   <Label className="text-xs text-gray-500">Inizio</Label>
-                  <Input
-                    type="time"
-                    value={ws}
-                    onChange={(e) => { setWs(e.target.value); setWindowDirty(true); }}
-                    className="w-28"
-                  />
+                  <TimePicker value={ws} onChange={(v) => { setWs(v); setWindowDirty(true); }} className="w-28" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs text-gray-500">Fine</Label>
-                  <Input
-                    type="time"
-                    value={we}
-                    onChange={(e) => { setWe(e.target.value); setWindowDirty(true); }}
-                    className="w-28"
-                  />
+                  <TimePicker value={we} onChange={(v) => { setWe(v); setWindowDirty(true); }} className="w-28" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs text-gray-500">Durata (ore)</Label>

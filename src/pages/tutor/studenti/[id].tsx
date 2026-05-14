@@ -7,6 +7,7 @@ import type { NextPageWithLayout } from "../../_app";
 import { api } from "~/utils/api";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { DatePicker } from "~/components/ui/date-time-picker";
 import { Textarea } from "~/components/ui/textarea";
 import { Skeleton } from "~/components/ui/skeleton";
 import {
@@ -160,20 +161,8 @@ const StudentStorico: NextPageWithLayout = function StudentStorico() {
             <SelectItem value="note">Nota tutor</SelectItem>
           </SelectContent>
         </Select>
-        <Input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          className="w-36 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-          placeholder="Da"
-        />
-        <Input
-          type="date"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          className="w-36 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-          placeholder="A"
-        />
+        <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Da" className="w-36" />
+        <DatePicker value={dateTo} onChange={setDateTo} placeholder="A" className="w-36" />
         {(typeFilter !== "all" || dateFrom || dateTo) && (
           <Button
             variant="ghost"
