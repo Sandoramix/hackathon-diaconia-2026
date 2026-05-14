@@ -51,18 +51,26 @@ async function main() {
     });
     console.log(`Tags: ${result.count} created, ${TAGS.length - result.count} already existed`);
 
-    const mainStructure = await prisma.structure.create({
-        data: {
-            name: `Limonaia`,
+    const mainStructureName = 'Limonaia';
+    let mainStructure = await prisma.structure.findFirst({
+        where: {
+            name: mainStructureName,
         }
     })
+    if (!mainStructure) {
+        mainStructure = await prisma.structure.create({
+            data: {
+                name: mainStructureName,
+            }
+        })
+    }
 
     const RULES = [
         {icon: "composite:Cigarette,Ban:red", text: "Non puoi fumare"},
         {icon: "composite:Syringe,Ban:red", text: "Non puoi portare droghe"},
         {icon: "composite:Wine,Ban:red", text: "Non puoi portare alcol"},
         {icon: "composite:Users,Ban:red", text: "Non puoi portare ospiti"},
-        {icon: "lucide:SprayCan:green", text: "Cerca di lasciare pulito"},
+        {icon: "lucide:BrushCleaning:green", text: "Cerca di lasciare pulito"},
         {icon: "lucide:Volume1:blue", text: "Rispetta gli altri: non urlare"},
         {icon: "lucide:Bed:blue", text: "Tutti a letto entro le *immettere ora"},
         {icon: "composite:Home", text: "Devi essere nella struttura entro le *immettere ora"},

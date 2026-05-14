@@ -22,7 +22,9 @@ import {
   Bike,
   SunMedium,
   Cigarette, Syringe, Wine, SprayCan, Wallet, Ear,
+    BrushCleaning
 } from "lucide-react";
+
 
 export interface IconEntry {
   name: string;
@@ -52,6 +54,7 @@ export const ICON_LIST: IconEntry[] = [
   { name: "Trophy",       Icon: Trophy,       keywords: ["trofeo", "vincitore", "campione"] },
   { name: "Smile",        Icon: Smile,        keywords: ["felice", "sorriso", "contento"] },
   { name: "Sparkles",     Icon: Sparkles,     keywords: ["speciale", "fantastico", "bravo"] },
+  { name: "BrushCleaning",Icon: BrushCleaning,keywords: ["pulire", "pulizia", "riparazione"] },
 
   // Persone / Sociale
   { name: "Users",        Icon: Users,        keywords: ["persone", "gruppo", "insieme"] },
