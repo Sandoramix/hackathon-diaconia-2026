@@ -156,7 +156,6 @@ export const COMPOSITE_ICON_LIST: CompositeIconEntry[] = [
   { name: "No droghe", icon: "composite:Syringe,Ban:red",    keywords: ["droga", "siringa", "sostanze"] },
   { name: "No alcol",  icon: "composite:Wine,Ban:red",       keywords: ["alcol", "vino", "bevanda alcolica"] },
   { name: "No ospiti", icon: "composite:Users,Ban:red",      keywords: ["ospiti", "persone esterne", "visitatori"] },
-  { name: "Casa",   icon: "composite:Home",  keywords: ["casa", "rientro", "struttura", "orario"] },
 ];
 
 export const ICON_COLORS = [
