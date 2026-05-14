@@ -86,7 +86,7 @@ export function DateStrip({
 
 // ─── Month Calendar (for modal) ───────────────────────────────────────────────
 
-function MonthCalendarModal({
+export function MonthCalendarModal({
   open,
   onClose,
   highlightedDates,
@@ -335,16 +335,18 @@ const StudentiEventiPage: NextPageWithLayout = function StudentiEventiPage() {
 
 // ─── Event detail dialog ──────────────────────────────────────────────────────
 
-function EventDetailDialog({
+export function EventDetailDialog({
   eventId,
   onClose,
   onToggle,
   toggling,
+  previewMode,
 }: {
   eventId: string;
   onClose: () => void;
-  onToggle: (id: string, register: boolean) => void;
-  toggling: boolean;
+  onToggle?: (id: string, register: boolean) => void;
+  toggling?: boolean;
+  previewMode?: boolean;
 }) {
   const { data: session } = useSession();
   const { data: event, isLoading } = api.event.getById.useQuery({ id: eventId });
@@ -419,36 +421,46 @@ function EventDetailDialog({
               )}
             </div>
 
-            <div className="flex gap-2 pt-2">
-              {!isPast && (
-                <Button className="flex-1" variant={isRegistered ? "outline" : "default"} disabled={isFull || toggling} onClick={() => onToggle(event.id, !isRegistered)}>
-                  {isFull ? "Al completo" : isRegistered ? "Annulla iscrizione" : "Iscriviti"}
-                </Button>
-              )}
-              {isPast && isRegistered && event.hasFeedback && !feedbackOpen && (
-                <Button variant="outline" className="flex-1" onClick={() => setFeedbackOpen(true)}>
-                  ⭐ Lascia feedback
-                </Button>
-              )}
-            </div>
+            {previewMode && (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                Anteprima — vista studente
+              </p>
+            )}
 
-            {feedbackOpen && (
-              <div className="space-y-3 rounded-lg border p-3">
-                <p className="text-sm font-medium">Come è andata?</p>
-                <div className="flex justify-center gap-4">
-                  {[1, 2, 3].map((v) => (
-                    <button key={v} onClick={() => setEmoji(v)} aria-pressed={emoji === v} aria-label={EMOJI_MAP[v]}
-                      className={`text-3xl transition-transform hover:scale-110 ${emoji === v ? "scale-125" : "opacity-50"}`}>
-                      {EMOJI_MAP[v]}
-                    </button>
-                  ))}
+            {!previewMode && (
+              <>
+                <div className="flex gap-2 pt-2">
+                  {!isPast && (
+                    <Button className="flex-1" variant={isRegistered ? "outline" : "default"} disabled={isFull || toggling} onClick={() => onToggle?.(event.id, !isRegistered)}>
+                      {isFull ? "Al completo" : isRegistered ? "Annulla iscrizione" : "Iscriviti"}
+                    </Button>
+                  )}
+                  {isPast && isRegistered && event.hasFeedback && !feedbackOpen && (
+                    <Button variant="outline" className="flex-1" onClick={() => setFeedbackOpen(true)}>
+                      ⭐ Lascia feedback
+                    </Button>
+                  )}
                 </div>
-                <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Commento opzionale..." rows={2} />
-                <Button className="w-full" disabled={!emoji || submitFeedback.isPending}
-                  onClick={() => submitFeedback.mutate({ eventId: event.id, emoji: emoji!, text: text || undefined })}>
-                  Invia feedback
-                </Button>
-              </div>
+
+                {feedbackOpen && (
+                  <div className="space-y-3 rounded-lg border p-3">
+                    <p className="text-sm font-medium">Come è andata?</p>
+                    <div className="flex justify-center gap-4">
+                      {[1, 2, 3].map((v) => (
+                        <button key={v} onClick={() => setEmoji(v)} aria-pressed={emoji === v} aria-label={EMOJI_MAP[v]}
+                          className={`text-3xl transition-transform hover:scale-110 ${emoji === v ? "scale-125" : "opacity-50"}`}>
+                          {EMOJI_MAP[v]}
+                        </button>
+                      ))}
+                    </div>
+                    <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Commento opzionale..." rows={2} />
+                    <Button className="w-full" disabled={!emoji || submitFeedback.isPending}
+                      onClick={() => submitFeedback.mutate({ eventId: event.id, emoji: emoji!, text: text || undefined })}>
+                      Invia feedback
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </>
         ) : null}
