@@ -31,7 +31,7 @@ function DateSeparator({ date }: { date: Date }) {
   return (
     <div className="flex items-center gap-3 py-1.5">
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 capitalize dark:text-gray-500">
+      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 capitalize dark:text-gray-500">
         {label}
       </span>
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
@@ -233,7 +233,7 @@ const StudenteChatPage: NextPageWithLayout = function StudenteChatPage() {
 
           {filteredConvos.length > 0 && (
             <div>
-              <p className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Conversazioni</p>
+              <p className="px-3 pb-1 pt-2.5 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Conversazioni</p>
               {filteredConvos.map((c) => {
                 const lastMsg = c.messages[0];
                 return (
@@ -257,7 +257,7 @@ const StudenteChatPage: NextPageWithLayout = function StudenteChatPage() {
 
           {filteredNewTutors.length > 0 && (
             <div className="mt-1 border-t border-gray-100 dark:border-gray-700/60">
-              <p className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Nuovo</p>
+              <p className="px-3 pb-1 pt-2.5 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Nuovo</p>
               {filteredNewTutors.map((t) => (
                 <button key={t.id} onClick={() => getOrCreateMut.mutate({ withUserId: t.id })} disabled={getOrCreateMut.isPending}
                   className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -321,7 +321,7 @@ const StudenteChatPage: NextPageWithLayout = function StudenteChatPage() {
                             isMe ? "bg-blue-600 text-white rounded-br-sm"
                               : "bg-gray-100 text-gray-900 rounded-bl-sm dark:bg-gray-700 dark:text-gray-100")}>
                             <p className="leading-snug">{msg.text}</p>
-                            <p className={cn("mt-0.5 text-right text-[10px]",
+                            <p className={cn("mt-0.5 text-right text-xs",
                               isMe ? "text-blue-200" : "text-gray-400 dark:text-gray-500")}>
                               {format(new Date(msg.createdAt), "HH:mm")}
                             </p>

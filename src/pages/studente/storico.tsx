@@ -137,7 +137,7 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
               <div key={entry.id} className="flex gap-3 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${t.color}`}>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${t.color}`}>
                       {t.label}
                     </span>
                     <span className="text-xs text-gray-900 dark:text-gray-100 font-medium truncate">
@@ -147,7 +147,7 @@ const StoricoPage: NextPageWithLayout = function StoricoPage() {
                   <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{entry.description}</p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500">{format(new Date(entry.date), "d MMM yy")}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{format(new Date(entry.date), "d MMM yy")}</p>
                 </div>
               </div>
             );

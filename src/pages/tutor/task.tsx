@@ -244,7 +244,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
                   {(task.tags as { id: string; name: string }[] | undefined)?.length ? (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {(task.tags as { id: string; name: string }[]).map(t => (
-                        <Badge key={t.id} variant="secondary" className="text-[10px]">{t.name}</Badge>
+                        <Badge key={t.id} variant="secondary" className="text-xs">{t.name}</Badge>
                       ))}
                     </div>
                   ) : null}
@@ -777,7 +777,7 @@ function SlotManagerDialog({ taskId, onClose }: { taskId: string; onClose: () =>
                         {occs.length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {occs.map((o) => (
-                              <span key={o.id} className="flex items-center gap-1 text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 rounded-full px-2 py-0.5">
+                              <span key={o.id} className="flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 rounded-full px-2 py-0.5">
                                 {o.user?.name ?? o.user?.username ?? o.userId}
                                 <button
                                   onClick={() => assignMut.mutate({ slotId: slot.id, userId: o.userId, assign: false })}

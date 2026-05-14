@@ -71,9 +71,9 @@ export function DateStrip({
                 : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700",
             )}
           >
-            <span className="text-[10px] font-medium uppercase">{format(day, "EEE", { locale: it })}</span>
+            <span className="text-xs font-medium uppercase">{format(day, "EEE", { locale: it })}</span>
             <span className="text-base font-bold leading-tight">{format(day, "d")}</span>
-            <span className="text-[10px] capitalize">{format(day, "MMM", { locale: it })}</span>
+            <span className="text-xs capitalize">{format(day, "MMM", { locale: it })}</span>
             {hasItem && (
               <span className={cn("mt-0.5 h-1 w-1 rounded-full", isSelected ? "bg-white" : "bg-blue-500")} aria-hidden="true" />
             )}
@@ -139,7 +139,7 @@ function MonthCalendarModal({
 
           <div className="mb-1 grid grid-cols-7">
             {["Lu", "Ma", "Me", "Gi", "Ve", "Sa", "Do"].map((d) => (
-              <p key={d} className="text-center text-[10px] font-semibold uppercase tracking-wide text-gray-400">{d}</p>
+              <p key={d} className="text-center text-xs font-semibold uppercase tracking-wide text-gray-400">{d}</p>
             ))}
           </div>
 
@@ -173,10 +173,10 @@ function MonthCalendarModal({
           </div>
 
           <div className="mt-2 flex gap-4 border-t border-gray-100 pt-2 dark:border-gray-700">
-            <span className="flex items-center gap-1.5 text-[10px] text-gray-500">
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
               <span className="h-2 w-2 rounded-full bg-blue-500" /> Evento
             </span>
-            <span className="flex items-center gap-1.5 text-[10px] text-gray-500">
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
               <span className="h-2 w-2 rounded-full bg-green-500" /> Iscritto
             </span>
           </div>
@@ -385,7 +385,7 @@ function EventDetailDialog({
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.place)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                    className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
                     aria-label={`Apri ${event.place} su Google Maps`}
                     onClick={(e) => e.stopPropagation()}
                   >

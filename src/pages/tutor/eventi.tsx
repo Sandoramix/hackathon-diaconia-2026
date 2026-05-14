@@ -205,7 +205,7 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.place)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] text-blue-600 hover:underline dark:text-blue-400"
+                        className="text-xs text-blue-600 hover:underline dark:text-blue-400"
                         aria-label={`Apri su Maps`}
                         onClick={(e) => e.stopPropagation()}
                       >Maps →</a>
@@ -488,7 +488,7 @@ function ParticipantDialog({ eventId, onClose }: { eventId: string; onClose: () 
             {/* Enrolled participants */}
             {enrolled.length > 0 && (
               <div>
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                   Iscritti ({enrolled.length})
                 </p>
                 <div className="space-y-1">
@@ -509,7 +509,7 @@ function ParticipantDialog({ eventId, onClose }: { eventId: string; onClose: () 
                             {u.name ?? u.username}
                           </p>
                           {u.name && (
-                            <p className="truncate font-mono text-[10px] text-gray-500">@{u.username}</p>
+                            <p className="truncate font-mono text-xs text-gray-500">@{u.username}</p>
                           )}
                         </div>
                         <Button
@@ -562,7 +562,7 @@ function ParticipantDialog({ eventId, onClose }: { eventId: string; onClose: () 
                             {u.name ?? u.username}
                           </p>
                           {u.name && (
-                            <p className="truncate font-mono text-[10px] text-gray-500">@{u.username}</p>
+                            <p className="truncate font-mono text-xs text-gray-500">@{u.username}</p>
                           )}
                         </div>
                         <UserPlus className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" aria-hidden="true" />

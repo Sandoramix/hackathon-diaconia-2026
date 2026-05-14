@@ -66,7 +66,7 @@ const StudenteRegolePage: NextPageWithLayout = function StudenteRegolePage() {
               <RuleIcon icon={rule.icon} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                 Regola {i + 1}
               </p>
               <p className="mt-0.5 text-sm leading-relaxed text-gray-800 dark:text-gray-100">

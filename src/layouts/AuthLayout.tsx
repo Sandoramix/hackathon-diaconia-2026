@@ -20,7 +20,7 @@ export default function AuthLayout({ children, title }: AuthLayoutProps) {
         className="flex min-h-screen flex-col items-center p-6"
         style={{ background: authGradient }}
       >
-        <div className="pt-12 pb-4">
+        <div className="pt-8 pb-4 sm:pt-12">
           <Image
             src="/diaconia.png"
             alt="Diaconia"

@@ -2,7 +2,7 @@ import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
 import { type NextPage } from "next/types";
-import { Geist } from "next/font/google";
+import localFont from "next/font/local";
 import type { ReactNode } from "react";
 
 import { api } from "~/utils/api";
@@ -13,8 +13,10 @@ export type NextPageWithLayout<P = Record<string, unknown>, IP = P> = NextPage<P
   getLayout?: (page: ReactNode, pageProps: P) => ReactNode;
 };
 
-const geist = Geist({
-  subsets: ["latin"],
+const roboto = localFont({
+  src: "../../public/fonts/Roboto-VariableFont_wdth,wght.ttf",
+  variable: "--roboto",
+  display: "swap",
 });
 
 const MyApp: AppType<{ session: Session | null }> = ({
@@ -25,7 +27,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
 
   return (
     <SessionProvider session={session}>
-      <div className={geist.className}>
+      <div className={roboto.variable}>
         {getLayout(<Component {...pageProps} />, pageProps as Record<string, unknown>)}
       </div>
     </SessionProvider>

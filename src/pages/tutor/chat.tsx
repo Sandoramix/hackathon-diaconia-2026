@@ -31,7 +31,7 @@ function DateSeparator({ date }: { date: Date }) {
   return (
     <div className="flex items-center gap-3 py-1.5" aria-label={`Messaggi del ${label}`}>
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 capitalize dark:text-gray-500">
+      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 capitalize dark:text-gray-500">
         {label}
       </span>
       <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
@@ -236,7 +236,7 @@ const ChatPage: NextPageWithLayout = function ChatPage() {
 
           {filteredConvos.length > 0 && (
             <div>
-              <p className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Conversazioni</p>
+              <p className="px-3 pb-1 pt-2.5 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Conversazioni</p>
               {filteredConvos.map((c) => {
                 const lastMsg = c.messages[0];
                 const unread = c._count.messages;
@@ -251,7 +251,7 @@ const ChatPage: NextPageWithLayout = function ChatPage() {
                         </AvatarFallback>
                       </Avatar>
                       {unread > 0 && (
-                        <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                        <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                           {unread > 9 ? "9+" : unread}
                         </span>
                       )}
@@ -271,7 +271,7 @@ const ChatPage: NextPageWithLayout = function ChatPage() {
 
           {filteredNewStudents.length > 0 && (
             <div className="mt-1 border-t border-gray-100 dark:border-gray-700/60">
-              <p className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Nuova chat</p>
+              <p className="px-3 pb-1 pt-2.5 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Nuova chat</p>
               {filteredNewStudents.map((s) => (
                 <button key={s.id} onClick={() => getOrCreateMut.mutate({ withUserId: s.id })} disabled={getOrCreateMut.isPending}
                   className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -336,7 +336,7 @@ const ChatPage: NextPageWithLayout = function ChatPage() {
                             isMe ? "bg-blue-600 text-white rounded-br-sm"
                               : "bg-gray-100 text-gray-900 rounded-bl-sm dark:bg-gray-700 dark:text-gray-100")}>
                             <p className="leading-snug">{msg.text}</p>
-                            <div className={cn("mt-0.5 flex items-center gap-1 text-[10px]",
+                            <div className={cn("mt-0.5 flex items-center gap-1 text-xs",
                               isMe ? "justify-end text-blue-200" : "text-gray-400 dark:text-gray-500")}>
                               <span>{format(new Date(msg.createdAt), "HH:mm")}</span>
                               {isMe && <CheckCheck className={cn("h-3 w-3", isRead ? "text-blue-200" : "text-blue-300/60")} aria-label={isRead ? "Letto" : "Inviato"} />}

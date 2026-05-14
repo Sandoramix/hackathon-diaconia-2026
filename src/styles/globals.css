@@ -4,11 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@font-face {
-  font-family: "Roboto";
-  src: url("/fonts/Roboto-VariableFont_wdth,wght.ttf") format("truetype");
-}
-
 @theme inline {
   --font-roboto: var(--roboto), roboto, arial, sans-serif;
 
@@ -68,6 +63,9 @@
 }
 
 :root {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   --radius: 0.625rem;
   --background: oklch(0.96 0 0);
   --foreground: oklch(0.145 0 0);

@@ -142,7 +142,7 @@ function LucideIconPicker({
                 className={cn("h-5 w-5", colorClasses?.textColor, colorClasses?.darkTextColor)}
                 aria-hidden="true"
               />
-              <span className="text-[8px] text-gray-400 truncate w-full text-center leading-tight">
+              <span className="text-xs text-gray-400 truncate w-full text-center leading-tight">
                 {entry.name}
               </span>
             </button>

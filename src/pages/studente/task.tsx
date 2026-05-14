@@ -109,7 +109,7 @@ function MonthCalendar({
 
       <div className="mb-1 grid grid-cols-7">
         {["Lu", "Ma", "Me", "Gi", "Ve", "Sa", "Do"].map((d) => (
-          <p key={d} className="text-center text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{d}</p>
+          <p key={d} className="text-center text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{d}</p>
         ))}
       </div>
 
@@ -145,10 +145,10 @@ function MonthCalendar({
       </div>
 
       <div className="mt-2 flex gap-4 border-t border-gray-100 pt-2 dark:border-gray-700">
-        <span className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
+        <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
           <span className="h-2 w-2 rounded-full bg-blue-500" /> Disponibile
         </span>
-        <span className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
+        <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
           <span className="h-2 w-2 rounded-full bg-green-500" /> Iscritto
         </span>
       </div>
@@ -333,7 +333,7 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
                         </span>
                       </div>
                       {task.mySlots.length > 1 && (
-                        <p className="mt-0.5 text-[10px] text-gray-400">+{task.mySlots.length - 1} altri slot</p>
+                        <p className="mt-0.5 text-xs text-gray-400">+{task.mySlots.length - 1} altri slot</p>
                       )}
                     </div>
                   </button>
@@ -459,7 +459,7 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
                             const mySlot = s.occupations.length > 0;
                             return (
                               <span key={s.id} className={cn(
-                                "rounded border px-1.5 py-0.5 text-[10px] font-medium",
+                                "rounded border px-1.5 py-0.5 text-xs font-medium",
                                 mySlot ? "border-green-300 bg-green-100 text-green-700 dark:border-green-700 dark:bg-green-900/30 dark:text-green-300"
                                   : full ? "border-gray-200 bg-gray-100 text-gray-400 line-through dark:border-gray-600 dark:bg-gray-700 dark:text-gray-500"
                                   : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
@@ -470,12 +470,12 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
                           })}
                         </div>
                         {!isBooked && openSlots.length > 0 && (
-                          <p className="mt-1 text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                          <p className="mt-1 text-xs font-medium text-blue-600 dark:text-blue-400">
                             Tocca per scegliere il tuo slot →
                           </p>
                         )}
                         {isBooked && (
-                          <p className="mt-1 text-[10px] font-medium text-green-600 dark:text-green-400">
+                          <p className="mt-1 text-xs font-medium text-green-600 dark:text-green-400">
                             Sei iscritto — tocca per i dettagli
                           </p>
                         )}

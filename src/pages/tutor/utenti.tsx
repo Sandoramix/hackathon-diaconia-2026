@@ -111,7 +111,7 @@ function InfoRow({ icon: Icon, label, value, mono }: { icon: React.ElementType; 
     <div className="flex items-start gap-3 text-sm">
       <Icon className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" aria-hidden="true" />
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{label}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{label}</p>
         <p className={cn("mt-0.5 text-gray-800 dark:text-gray-200 break-words", mono && "font-mono text-xs")}>{value}</p>
       </div>
     </div>
