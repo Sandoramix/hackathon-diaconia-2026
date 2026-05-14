@@ -150,7 +150,7 @@ const AllarmiPage: NextPageWithLayout = function AllarmiPage() {
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <Button size="sm" variant="ghost" asChild aria-label="Apri chat con studente">
-                    <Link href={`/tutor/chat?userId=${alarm.student.id}`}>
+                    <Link href={`/tutor/chat?username=${alarm.student.username}`}>
                       <MessageCircle className="h-4 w-4" aria-hidden="true" />
                     </Link>
                   </Button>

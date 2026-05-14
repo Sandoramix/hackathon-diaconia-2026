@@ -88,6 +88,22 @@ const ChatPage: NextPageWithLayout = function ChatPage() {
     onError: (e) => toast.error(e.message),
   });
 
+  // Auto-open chat when ?username= is in the URL
+  const handledUsernameRef = useRef<string | null>(null);
+  useEffect(() => {
+    const username = typeof router.query.username === "string" ? router.query.username : null;
+    if (!username || allStudents.length === 0) return;
+    if (handledUsernameRef.current === username) return;
+    handledUsernameRef.current = username;
+    const student = allStudents.find((s) => s.username === username);
+    if (student) {
+      getOrCreateMut.mutate({ withUserId: student.id });
+    } else {
+      toast.error("Studente non trovato");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.query.username, allStudents]);
+
   // Latest messages polling
   const { data: latestData } = api.chat.messages.useQuery(
     { conversationId: activeId!, limit: 25 },

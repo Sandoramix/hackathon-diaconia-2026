@@ -109,6 +109,9 @@ export const userRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.user.findUnique({ where: { username: input.username } });
+      if (existing) throw new TRPCError({ code: "CONFLICT", message: "Username già in uso" });
+
       return ctx.db.user.create({
         data: {
           username: input.username,

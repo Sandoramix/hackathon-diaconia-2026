@@ -79,24 +79,53 @@ function BroadcastUnreadDot() {
 }
 
 const tutorNav: NavItem[] = [
-  { href: "/tutor",              label: "Home",      icon: LayoutDashboard },
-  { href: "/tutor/utenti",       label: "Utenti",    icon: Users },
-  { href: "/tutor/chat",         label: "Chat",      icon: MessageCircle, badge: ChatUnreadDot },
-  { href: "/tutor/allarmi",      label: "Allarmi",   icon: AlertTriangle, badge: AlarmBadge },
-  { href: "/tutor/broadcast",    label: "Broadcast", icon: Radio },
-  { href: "/tutor/eventi",       label: "Eventi",    icon: CalendarDays },
-  { href: "/tutor/task",         label: "Task",      icon: ListChecks },
-  { href: "/tutor/profilo",      label: "Profilo",   icon: UserCircle },
+  { href: "/tutor",         label: "Home",    icon: LayoutDashboard },
+  { href: "/tutor/utenti",  label: "Utenti",  icon: Users },
+  { href: "/tutor/chat",    label: "Chat",    icon: MessageCircle, badge: ChatUnreadDot },
+  { href: "/tutor/eventi",  label: "Eventi",  icon: CalendarDays },
+  { href: "/tutor/task",    label: "Task",    icon: ListChecks },
+  { href: "/tutor/profilo", label: "Profilo", icon: UserCircle },
 ];
 
 const studenteNav: NavItem[] = [
-  { href: "/studente/chat",           label: "Chat",    icon: MessageCircle },
-  { href: "/studente/task",           label: "Task",    icon: ListChecks },
-  { href: "/studente/eventi",         label: "Eventi",  icon: CalendarDays },
-  { href: "/studente/comunicazioni",  label: "Notizie", icon: Bell, badge: BroadcastUnreadDot },
-  { href: "/studente/regole",         label: "Regole",  icon: School },
-  { href: "/studente/profilo",        label: "Profilo", icon: UserCircle },
+  { href: "/studente/chat",    label: "Chat",    icon: MessageCircle },
+  { href: "/studente/task",    label: "Task",    icon: ListChecks },
+  { href: "/studente/eventi",  label: "Eventi",  icon: CalendarDays },
+  { href: "/studente/regole",  label: "Regole",  icon: School },
+  { href: "/studente/profilo", label: "Profilo", icon: UserCircle },
 ];
+
+function HeaderNavLink({
+  href,
+  label,
+  icon: Icon,
+  badge: Badge,
+}: {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  badge?: React.ComponentType;
+}) {
+  const router = useRouter();
+  const active = router.pathname.startsWith(href);
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className={cn(
+        "relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+        active
+          ? "text-blue-600 dark:text-blue-400"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+      )}
+    >
+      <span className="relative">
+        <Icon className="h-5 w-5" aria-hidden="true" />
+        {Badge && <Badge />}
+      </span>
+    </Link>
+  );
+}
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -163,6 +192,15 @@ export default function DashboardLayout({ children, title, noPadding, wide }: Da
             <div className="flex-1" />
           )}
           {headerActions}
+          {!isStudente && session && (
+            <>
+              <HeaderNavLink href="/tutor/allarmi" label="Allarmi" icon={AlertTriangle} badge={AlarmBadge} />
+              <HeaderNavLink href="/tutor/broadcast" label="Broadcast" icon={Radio} />
+            </>
+          )}
+          {isStudente && session && (
+            <HeaderNavLink href="/studente/comunicazioni" label="Comunicazioni" icon={Bell} badge={BroadcastUnreadDot} />
+          )}
           <DarkToggle />
         </header>
 
