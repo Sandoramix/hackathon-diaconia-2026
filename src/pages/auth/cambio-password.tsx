@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect, useState, type ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -197,6 +197,13 @@ const CambioPasswordPage: NextPageWithLayout = function CambioPasswordPage() {
           {changePassword.isPending ? "Salvataggio..." : "Salva password"}
         </button>
       </form>
+      <button
+        type="button"
+        onClick={() => void signOut({ callbackUrl: "/auth/tipo" })}
+        className="mt-2 w-full text-center text-sm text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+      >
+        Esci dall'account
+      </button>
     </div>
   );
 };
