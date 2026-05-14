@@ -68,7 +68,7 @@ function MonthCalendar({
   selected: Date;
   onSelect: (d: Date) => void;
 }) {
-  const slotTasks = tasks.filter((t) => !t.isCompletable);
+  const slotTasks = tasks.filter((t) => t.slots.length > 0);
 
   const now = new Date();
   const nearestFuture = slotTasks
@@ -219,11 +219,11 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
   if (status !== "authenticated") return null;
 
   const completedTaskIds = new Set(history?.completedTasks.map((c) => c.taskId) ?? []);
-  const completableTasks = tasks.filter((t) => t.isCompletable) as TaskItem[];
+  // Only show "Segna fatto" for completable tasks that have no slots
+  const completableTasks = tasks.filter((t) => t.isCompletable && t.slots.length === 0) as TaskItem[];
 
-  // Slot tasks where student is enrolled OR there are available slots
+  // Slot tasks where student is enrolled OR there are available slots (includes isCompletable if they have slots)
   const slotTasks = (tasks as TaskItem[]).filter((t) => {
-    if (t.isCompletable) return false;
     if (t.slots.length === 0) return false;
     const hasMyOccupation = t.slots.some((s) => s.occupations.length > 0);
     const hasAvailable = t.slots.some((s) => s._count.occupations < s.maxOccupants);
