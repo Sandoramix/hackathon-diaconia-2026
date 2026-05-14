@@ -63,6 +63,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
   const [occasionalDate, setOccasionalDate] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [showFascia, setShowFascia] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") void router.replace("/auth/tipo");
@@ -123,6 +124,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
     setOccasionalDate("");
     setTags([]);
     setTagInput("");
+    setShowFascia(false);
     form.reset({ type: "OCCASIONAL", hasFeedback: true, isCompletable: false });
   }
 
@@ -133,6 +135,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
     setWindowStart(task.windowStart ?? "");
     setWindowEnd(task.windowEnd ?? "");
     setSlotDurationHours(task.slotDurationHours ?? "");
+    setShowFascia(!!(task.windowStart ?? task.windowEnd ?? task.slotDurationHours));
     setTags((task.tags as { name: string }[] ?? []).map((t) => t.name));
     setTagInput("");
     form.reset({
@@ -152,6 +155,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
     setWindowStart(task.windowStart ?? "");
     setWindowEnd(task.windowEnd ?? "");
     setSlotDurationHours(task.slotDurationHours ?? "");
+    setShowFascia(!!(task.windowStart ?? task.windowEnd ?? task.slotDurationHours));
     setTags((task.tags as { name: string }[] ?? []).map((t) => t.name));
     setTagInput("");
     setOccasionalDate("");
@@ -385,11 +389,23 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
             )}
 
             {/* Time window for slot generation */}
-            {!form.watch("isCompletable") && (
+            <div>
+              <button
+                type="button"
+                onClick={() => { setShowFascia(v => !v); if (showFascia) { setWindowStart(""); setWindowEnd(""); setSlotDurationHours(""); } }}
+                className="flex items-center gap-2 text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <span className={cn("flex h-4 w-4 items-center justify-center rounded border transition-colors",
+                  showFascia ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800")}>
+                  {showFascia && <span className="text-[10px] leading-none">✓</span>}
+                </span>
+                Fascia oraria slot
+              </button>
+            </div>
+            {showFascia && (
               <div className="space-y-3 rounded-lg border p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Fascia oraria slot</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Se configurata, ogni giorno viene suddiviso in slot di durata fissa.
+                  Ogni giorno viene suddiviso in slot di durata fissa.
                 </p>
                 <div className="flex gap-2 items-end">
                   <Field label="Inizio">
@@ -429,15 +445,6 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
                         (slotDurationHours * 3600 * 1000),
                     )} slot per giorno ({windowStart}–{windowEnd}, ogni {slotDurationHours}h)
                   </p>
-                )}
-                {(windowStart || windowEnd || slotDurationHours) && (
-                  <button
-                    type="button"
-                    className="text-xs text-red-500 hover:text-red-700"
-                    onClick={() => { setWindowStart(""); setWindowEnd(""); setSlotDurationHours(""); }}
-                  >
-                    Rimuovi fascia
-                  </button>
                 )}
               </div>
             )}
