@@ -152,31 +152,53 @@ export const ICON_COLOR_MAP = Object.fromEntries(
   ICON_COLORS.map((c) => [c.name, c]),
 ) as Record<IconColorName, (typeof ICON_COLORS)[number]>;
 
-/** Parse icon stored as "lucide:Name:colorName" or raw emoji */
-export function parseLucideIcon(icon: string): { type: "lucide"; name: string; color: IconColorName } | { type: "emoji"; value: string } {
+export interface IconLayer {
+  name: string;
+  color: IconColorName;
+}
+
+export type ParsedIcon =
+  | { type: "emoji"; value: string }
+  | { type: "lucide"; name: string; color: IconColorName }
+  | { type: "composite"; layers: IconLayer[] };
+
+function parseColorStr(colorStr: string | undefined): IconColorName {
+  if (!colorStr) return "gray";
+  if (colorStr.startsWith("text-")) {
+    return ICON_COLORS.find((c) => c.textColor === colorStr)?.name ?? "gray";
+  }
+  return colorStr as IconColorName;
+}
+
+/** Parse icon stored as "lucide:Name:colorName", "composite:Name1:color1,Name2:color2", or raw emoji */
+export function parseLucideIcon(icon: string): ParsedIcon {
+  if (icon.startsWith("composite:")) {
+    const layerStr = icon.slice("composite:".length);
+    const layers = layerStr.split(",").map((part) => {
+      const [name, colorStr] = part.split(":");
+      return { name: name ?? "", color: parseColorStr(colorStr) };
+    });
+    return { type: "composite", layers };
+  }
+
   if (icon.startsWith("lucide:")) {
     const [, name, colorStr] = icon.split(":");
-    let color: IconColorName = "gray";
-
-    if (colorStr) {
-      // Backwards compatibility with old format
-      if (colorStr.startsWith("text-")) {
-        color = ICON_COLORS.find((c) => c.textColor === colorStr)?.name ?? "gray";
-      } else {
-        color = colorStr as IconColorName;
-      }
-    }
-    
-    return { type: "lucide", name: name ?? "", color };
+    return { type: "lucide", name: name ?? "", color: parseColorStr(colorStr) };
   }
+
   return { type: "emoji", value: icon };
 }
 
-/** Build the stored icon string for lucide icons */
-export function buildLucideIcon(name:string, color: IconColorName | null): string {
-  // We don't store "gray" to save space, it's the default.
-  if (color && color !== "gray") {
-    return `lucide:${name}:${color}`;
-  }
+/** Build the stored icon string for a single lucide icon */
+export function buildLucideIcon(name: string, color: IconColorName | null): string {
+  if (color && color !== "gray") return `lucide:${name}:${color}`;
   return `lucide:${name}`;
+}
+
+/** Build the stored icon string for a composite (stacked) icon */
+export function buildCompositeIcon(layers: IconLayer[]): string {
+  const parts = layers.map((l) =>
+    l.color && l.color !== "gray" ? `${l.name}:${l.color}` : l.name,
+  );
+  return `composite:${parts.join(",")}`;
 }

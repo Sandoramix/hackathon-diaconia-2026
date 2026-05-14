@@ -6,6 +6,7 @@ import type { NextPageWithLayout } from "../_app";
 import { api } from "~/utils/api";
 import { Skeleton } from "~/components/ui/skeleton";
 import { ICON_MAP, parseLucideIcon } from "~/lib/lucideIcons";
+import { RenderIcon } from "~/components/RenderIcon";
 import { cn } from "~/lib/utils";
 
 function RuleIcon({ icon }: { icon: string }) {
@@ -20,7 +21,11 @@ function RuleIcon({ icon }: { icon: string }) {
       />
     );
   }
-  return <span className="text-2xl leading-none shrink-0" aria-hidden="true">{parsed.value}</span>;
+  if (parsed.type === "emoji") {
+    return <span className="text-2xl leading-none shrink-0" aria-hidden="true">{parsed.value}</span>;
+  }
+  // composite: fall back to RenderIcon
+  return <RenderIcon icon={icon} className="h-7 w-7 shrink-0 text-gray-700 dark:text-gray-300" />;
 }
 
 const StudenteRegolePage: NextPageWithLayout = function StudenteRegolePage() {

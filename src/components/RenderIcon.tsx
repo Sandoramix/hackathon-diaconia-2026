@@ -7,13 +7,38 @@ type LucideProps = React.ComponentProps<typeof Home>;
 
 export const RenderIcon = ({
   icon,
-  ...props
+  className,
+  style,
+  ...iconProps
 }: { icon: string } & Omit<LucideProps, "name">) => {
   const parsed = parseLucideIcon(icon);
 
   if (parsed.type === "emoji") {
     // @ts-ignore
-    return <span {...props}>{parsed.value}</span>;
+    return <span className={className} style={style} {...iconProps}>{parsed.value}</span>;
+  }
+
+  if (parsed.type === "composite") {
+    if (parsed.layers.length === 0) return null;
+    return (
+      <span className={cn("relative inline-flex", className)} style={style}>
+        {parsed.layers.map((layer, i) => {
+          const color = ICON_COLOR_MAP[layer.color];
+          return (
+            <LucideIcon
+              key={i}
+              name={layer.name}
+              {...iconProps}
+              className={cn(
+                color?.textColor,
+                color?.darkTextColor,
+                i > 0 && "absolute top-0 left-0",
+              )}
+            />
+          );
+        })}
+      </span>
+    );
   }
 
   const color = ICON_COLOR_MAP[parsed.color];
@@ -21,8 +46,8 @@ export const RenderIcon = ({
   return (
     <LucideIcon
       name={parsed.name}
-      {...props}
-      className={cn(color.textColor, color.darkTextColor, props.className)}
+      {...iconProps}
+      className={cn(color.textColor, color.darkTextColor, className)}
     />
   );
 };
