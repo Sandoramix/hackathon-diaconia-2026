@@ -68,6 +68,7 @@ interface DashboardLayoutProps {
   children: ReactNode;
   title?: string;
   noPadding?: boolean;
+  wide?: boolean;
 }
 
 function DarkToggle() {
@@ -83,7 +84,7 @@ function DarkToggle() {
   );
 }
 
-export default function DashboardLayout({ children, title, noPadding }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, title, noPadding, wide }: DashboardLayoutProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [headerActions, setHeaderActionsState] = useState<ReactNode>(null);
@@ -142,7 +143,7 @@ export default function DashboardLayout({ children, title, noPadding }: Dashboar
           </main>
         ) : (
           <main id="main-content" className="flex-1 overflow-y-auto pb-20">
-            <div className="mx-auto max-w-2xl px-4 py-4">{children}</div>
+            <div className={cn("mx-auto px-4 py-4", wide ? "max-w-4xl" : "max-w-2xl")}>{children}</div>
           </main>
         )}
 
@@ -198,8 +199,8 @@ export default function DashboardLayout({ children, title, noPadding }: Dashboar
   );
 }
 
-export function getDashboardLayout(title?: string, opts?: { noPadding?: boolean }) {
+export function getDashboardLayout(title?: string, opts?: { noPadding?: boolean; wide?: boolean }) {
   return function getLayout(page: ReactNode) {
-    return <DashboardLayout title={title} noPadding={opts?.noPadding}>{page}</DashboardLayout>;
+    return <DashboardLayout title={title} noPadding={opts?.noPadding} wide={opts?.wide}>{page}</DashboardLayout>;
   };
 }

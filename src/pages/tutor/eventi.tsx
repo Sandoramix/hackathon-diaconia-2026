@@ -600,6 +600,6 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-EventiPage.getLayout = getDashboardLayout("Eventi");
+EventiPage.getLayout = getDashboardLayout("Eventi", { wide: true });
 
 export default EventiPage;
