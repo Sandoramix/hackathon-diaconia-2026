@@ -224,22 +224,24 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
   // Only show "Segna fatto" for completable tasks that have no slots
   const completableTasks = tasks.filter((t) => t.isCompletable && t.slots.length === 0) as TaskItem[];
 
-  // Slot tasks where student is enrolled OR there are available slots (includes isCompletable if they have slots)
+  const taskNow = new Date();
+
+  // Slot tasks where student is enrolled in a future slot OR future available slots exist
   const slotTasks = (tasks as TaskItem[]).filter((t) => {
     if (t.slots.length === 0) return false;
-    const hasMyOccupation = t.slots.some((s) => s.occupations.length > 0);
-    const hasAvailable = t.slots.some((s) => s._count.occupations < s.maxOccupants);
-    return hasMyOccupation || hasAvailable;
+    const hasMyFutureOccupation = t.slots.some((s) => s.occupations.length > 0 && new Date(s.date) >= taskNow);
+    const hasFutureAvailable = t.slots.some((s) => s._count.occupations < s.maxOccupants && new Date(s.date) >= taskNow);
+    return hasMyFutureOccupation || hasFutureAvailable;
   });
 
-  // My enrolled slot tasks (booked occupations)
+  // My enrolled slot tasks — only future occupied slots
   type EnrolledTask = TaskItem & { mySlots: SlotInfo[] };
   const enrolledTasks: EnrolledTask[] = slotTasks
-    .filter((t) => t.slots.some((s) => s.occupations.length > 0))
+    .filter((t) => t.slots.some((s) => s.occupations.length > 0 && new Date(s.date) >= taskNow))
     .map((t) => ({
       ...t,
       mySlots: t.slots
-        .filter((s) => s.occupations.length > 0)
+        .filter((s) => s.occupations.length > 0 && new Date(s.date) >= taskNow)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     }))
     .sort((a, b) => {

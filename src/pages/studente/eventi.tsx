@@ -246,9 +246,11 @@ const StudentiEventiPage: NextPageWithLayout = function StudentiEventiPage() {
 
   if (status !== "authenticated") return null;
 
-  const eventDates = events.map((e) => new Date(e.startDate));
-  const enrolledDates = events.filter((e) => e.participants.length > 0).map((e) => new Date(e.startDate));
-  const filteredEvents = events.filter((e) => isSameDay(new Date(e.startDate), selectedDate));
+  const now = new Date();
+  const activeEvents = events.filter((e) => new Date(e.endDate) >= now);
+  const eventDates = activeEvents.map((e) => new Date(e.startDate));
+  const enrolledDates = activeEvents.filter((e) => e.participants.length > 0).map((e) => new Date(e.startDate));
+  const filteredEvents = activeEvents.filter((e) => isSameDay(new Date(e.startDate), selectedDate));
 
   return (
     <div className="space-y-4">
@@ -354,14 +356,6 @@ export function EventDetailDialog({
 }) {
   const { data: session } = useSession();
   const { data: event, isLoading } = api.event.getById.useQuery({ id: eventId });
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [emoji, setEmoji] = useState<number | null>(null);
-  const [text, setText] = useState("");
-
-  const submitFeedback = api.feedback.submit.useMutation({
-    onSuccess: () => { toast.success("Feedback inviato"); setFeedbackOpen(false); },
-    onError: (e) => toast.error(e.message),
-  });
 
   const isRegistered = event?.participants.some((p) => p.userId === session?.user.id) ?? false;
   const isFull = !!event?.userLimit && (event._count.participants ?? 0) >= event.userLimit && !isRegistered;
@@ -431,44 +425,12 @@ export function EventDetailDialog({
               </p>
             )}
 
-            {!previewMode && (
-              <>
-                <div className="flex gap-2 pt-2">
-                  {!isPast && (
-                    <Button className="flex-1" variant={isRegistered ? "outline" : "default"} disabled={isFull || toggling} onClick={() => onToggle?.(event.id, !isRegistered)}>
-                      {isFull ? "Al completo" : isRegistered ? "Annulla iscrizione" : "Iscriviti"}
-                    </Button>
-                  )}
-                  {isPast && isRegistered && event.hasFeedback && !feedbackOpen && (
-                    <Button variant="outline" className="flex-1" onClick={() => setFeedbackOpen(true)}>
-                      ⭐ Lascia feedback
-                    </Button>
-                  )}
-                </div>
-
-                {feedbackOpen && (
-                  <div className="space-y-3 rounded-lg border p-3">
-                    <p className="text-sm font-medium">Come è andata?</p>
-                    <div className="flex justify-center gap-6">
-                      {([1, 2, 3] as const).map((v) => {
-                        const Icon = EMOJI_ICONS[v]!;
-                        return (
-                          <button key={v} onClick={() => setEmoji(v)} aria-pressed={emoji === v}
-                            className={cn("transition-all duration-150",
-                              emoji === v ? cn(EMOJI_COLORS[v], "scale-125") : "text-gray-300 opacity-60 hover:opacity-100 dark:text-gray-600")}>
-                            <Icon className="h-10 w-10" aria-hidden="true" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Commento opzionale..." rows={2} />
-                    <Button className="w-full" disabled={!emoji || submitFeedback.isPending}
-                      onClick={() => submitFeedback.mutate({ eventId: event.id, emoji: emoji!, text: text || undefined })}>
-                      Invia feedback
-                    </Button>
-                  </div>
-                )}
-              </>
+            {!previewMode && !isPast && (
+              <div className="flex gap-2 pt-2">
+                <Button className="flex-1" variant={isRegistered ? "outline" : "default"} disabled={isFull || toggling} onClick={() => onToggle?.(event.id, !isRegistered)}>
+                  {isFull ? "Al completo" : isRegistered ? "Annulla iscrizione" : "Iscriviti"}
+                </Button>
+              </div>
             )}
           </>
         ) : null}
