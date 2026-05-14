@@ -375,7 +375,7 @@ export function EventDetailDialog({
         ) : event ? (
           <>
             {event.image && (
-              <img src={event.image} alt={event.title} className="-mt-1 h-44 w-full rounded-lg object-cover" />
+              <img src={event.image} alt={event.title} className="-mt-1 w-full max-h-[45vh] rounded-lg object-cover" />
             )}
             <DialogHeader>
               <DialogTitle>{event.title}</DialogTitle>
