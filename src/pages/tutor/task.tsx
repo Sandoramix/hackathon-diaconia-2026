@@ -477,7 +477,6 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
                 <div className="flex flex-wrap gap-1">
                   {existingTags
                     .filter(t => t.name.toLowerCase().includes(tagInput.toLowerCase()) && !tags.includes(t.name))
-                    .slice(0, 8)
                     .map(t => (
                       <button key={t.id} type="button" onClick={() => { setTags(p => [...p, t.name]); setTagInput(""); }}
                         className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
@@ -489,7 +488,7 @@ const TaskPage: NextPageWithLayout = function TaskPage() {
               {/* Show all tags when input is empty and focused */}
               {!tagInput && existingTags.filter(t => !tags.includes(t.name)).length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {existingTags.filter(t => !tags.includes(t.name)).slice(0, 12).map(t => (
+                  {existingTags.filter(t => !tags.includes(t.name)).map(t => (
                     <button key={t.id} type="button" onClick={() => setTags(p => [...p, t.name])}
                       className="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
                       {t.name}
