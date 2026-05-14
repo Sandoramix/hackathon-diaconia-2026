@@ -25,6 +25,9 @@ import {
   Users,
   Sun,
   Moon,
+  AlertTriangle,
+  Radio,
+  Bell,
 } from "lucide-react";
 
 interface NavItem {
@@ -47,21 +50,52 @@ function ChatUnreadDot() {
   );
 }
 
+function AlarmBadge() {
+  const { data: count } = api.alarm.count.useQuery(undefined, {
+    refetchInterval: 30000,
+  });
+  if (!count) return null;
+  return (
+    <span
+      className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[10px] font-bold text-white border-2 border-white dark:border-gray-900"
+      aria-label={`${count} allarmi attivi`}
+    >
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
+
+function BroadcastUnreadDot() {
+  const { data: hasUnread } = api.broadcast.hasUnread.useQuery(undefined, {
+    refetchInterval: 30000,
+  });
+  if (!hasUnread) return null;
+  return (
+    <span
+      className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-blue-500 border-2 border-white dark:border-gray-900"
+      aria-label="Comunicazioni non lette"
+    />
+  );
+}
+
 const tutorNav: NavItem[] = [
-  { href: "/tutor",         label: "Home",   icon: LayoutDashboard },
-  { href: "/tutor/utenti",  label: "Utenti", icon: Users },
-  { href: "/tutor/chat",    label: "Chat",   icon: MessageCircle, badge: ChatUnreadDot },
-  { href: "/tutor/eventi",  label: "Eventi", icon: CalendarDays },
-  { href: "/tutor/task",    label: "Task",   icon: ListChecks },
-  { href: "/tutor/profilo", label: "Profilo",icon: UserCircle },
+  { href: "/tutor",              label: "Home",      icon: LayoutDashboard },
+  { href: "/tutor/utenti",       label: "Utenti",    icon: Users },
+  { href: "/tutor/chat",         label: "Chat",      icon: MessageCircle, badge: ChatUnreadDot },
+  { href: "/tutor/allarmi",      label: "Allarmi",   icon: AlertTriangle, badge: AlarmBadge },
+  { href: "/tutor/broadcast",    label: "Broadcast", icon: Radio },
+  { href: "/tutor/eventi",       label: "Eventi",    icon: CalendarDays },
+  { href: "/tutor/task",         label: "Task",      icon: ListChecks },
+  { href: "/tutor/profilo",      label: "Profilo",   icon: UserCircle },
 ];
 
 const studenteNav: NavItem[] = [
-  { href: "/studente/chat",   label: "Chat",   icon: MessageCircle },
-  { href: "/studente/task",   label: "Task",   icon: ListChecks },
-  { href: "/studente/eventi", label: "Eventi", icon: CalendarDays },
-  { href: "/studente/regole", label: "Regole", icon: School },
-  { href: "/studente/profilo",label: "Profilo",icon: UserCircle },
+  { href: "/studente/chat",           label: "Chat",    icon: MessageCircle },
+  { href: "/studente/task",           label: "Task",    icon: ListChecks },
+  { href: "/studente/eventi",         label: "Eventi",  icon: CalendarDays },
+  { href: "/studente/comunicazioni",  label: "Notizie", icon: Bell, badge: BroadcastUnreadDot },
+  { href: "/studente/regole",         label: "Regole",  icon: School },
+  { href: "/studente/profilo",        label: "Profilo", icon: UserCircle },
 ];
 
 interface DashboardLayoutProps {

@@ -65,6 +65,8 @@ model Structure {
   tasks              Task[]
   conversations      Conversation[]
   activityNotes      StudentActivityNote[]
+  alarms             StudentAlarm[]
+  broadcasts         Broadcast[]
 
   @@index([name])
 }
@@ -114,6 +116,9 @@ model User {
   tutorConversations    Conversation[]            @relation("ConversationTutor")
   activityNotesGiven    StudentActivityNote[]     @relation("TutorActivityNotes")
   activityNotesReceived StudentActivityNote[]     @relation("StudentActivityNotes")
+  alarmsReceived        StudentAlarm[]            @relation("StudentAlarms")
+  broadcastsGiven       Broadcast[]               @relation("BroadcastAuthor")
+  broadcastReads        BroadcastRead[]           @relation("BroadcastReads")
 }
 
 // ─── Event ────────────────────────────────────────────────────────────────────
@@ -279,6 +284,64 @@ model StudentActivityNote {
   updatedAt   DateTime  @updatedAt
 
   @@index([studentId, createdAt])
+}
+
+// ─── Alarms ───────────────────────────────────────────────────────────────────
+
+enum AlarmType {
+  INACTIVE
+  HIGH_ABANDONMENT
+  LOW_EVENT_PARTICIPATION
+}
+
+enum AlarmSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model StudentAlarm {
+  id           String        @id @default(cuid())
+  studentId    String
+  student      User          @relation("StudentAlarms", fields: [studentId], references: [id])
+  structureId  String
+  structure    Structure     @relation(fields: [structureId], references: [id])
+  type         AlarmType
+  severity     AlarmSeverity
+  message      String        @db.Text
+  resolvedAt   DateTime?
+  resolvedById String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([studentId, resolvedAt])
+  @@index([structureId, resolvedAt])
+}
+
+// ─── Broadcast ────────────────────────────────────────────────────────────────
+
+model Broadcast {
+  id          String          @id @default(cuid())
+  title       String
+  body        String          @db.Text
+  authorId    String
+  author      User            @relation("BroadcastAuthor", fields: [authorId], references: [id])
+  structureId String
+  structure   Structure       @relation(fields: [structureId], references: [id])
+  createdAt   DateTime        @default(now())
+  reads       BroadcastRead[]
+
+  @@index([structureId, createdAt])
+}
+
+model BroadcastRead {
+  broadcastId String
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User      @relation("BroadcastReads", fields: [studentId], references: [id])
+  readAt      DateTime  @default(now())
+
+  @@id([broadcastId, studentId])
 }
 
 // ─── Chat ─────────────────────────────────────────────────────────────────────
