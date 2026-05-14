@@ -88,6 +88,7 @@ const tutorNav: NavItem[] = [
 ];
 
 const studenteNav: NavItem[] = [
+  { href: "/studente",         label: "Home",    icon: LayoutDashboard },
   { href: "/studente/chat",    label: "Chat",    icon: MessageCircle },
   { href: "/studente/task",    label: "Task",    icon: ListChecks },
   { href: "/studente/eventi",  label: "Eventi",  icon: CalendarDays },

@@ -10,6 +10,7 @@ import { Skeleton } from "~/components/ui/skeleton";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { ChevronRight } from "lucide-react";
+import { RenderIcon } from "~/components/RenderIcon";
 
 const StudenteHome: NextPageWithLayout = function StudenteHome() {
   const { data: session, status } = useSession();
@@ -53,7 +54,7 @@ const StudenteHome: NextPageWithLayout = function StudenteHome() {
               )}
               {structure.rules.slice(0, 3).map((r) => (
                 <div key={r.id} className="flex items-start gap-2 text-sm">
-                  <span className="shrink-0" aria-hidden="true">{r.icon}</span>
+                  <RenderIcon icon={r.icon} className="h-5 w-5 shrink-0 mt-0.5" aria-hidden="true" />
                   <span>{r.text}</span>
                 </div>
               ))}
