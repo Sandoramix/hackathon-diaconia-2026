@@ -23,9 +23,11 @@ import {
 } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn } from "~/lib/utils";
-import { MapPin, Users, CalendarDays, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { MapPin, Users, CalendarDays, ChevronLeft, ChevronRight, RefreshCw, Frown, Meh, Smile } from "lucide-react";
+import { PendingFeedbackSection } from "~/components/PendingFeedbackSection";
 
-const EMOJI_MAP: Record<number, string> = { 1: "😕", 2: "😐", 3: "😊" };
+const EMOJI_ICONS: Record<number, React.ComponentType<{ className?: string }>> = { 1: Frown, 2: Meh, 3: Smile };
+const EMOJI_COLORS: Record<number, string> = { 1: "text-red-500", 2: "text-amber-400", 3: "text-green-500" };
 
 // ─── Shared DateStrip ─────────────────────────────────────────────────────────
 
@@ -257,18 +259,20 @@ const StudentiEventiPage: NextPageWithLayout = function StudentiEventiPage() {
         highlightedDates={eventDates}
       />
 
-      {isLoading && <Skeleton className="h-20 w-full" />}
+      {/* Pending feedbacks */}
+      <PendingFeedbackSection />
 
-      {!isLoading && filteredEvents.length === 0 && (
-        <div className="py-10 text-center">
-          <CalendarDays className="mx-auto mb-3 h-9 w-9 text-gray-300 dark:text-gray-600" aria-hidden="true" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Nessun evento il <span className="font-medium capitalize">{format(selectedDate, "d MMMM", { locale: it })}</span>
-          </p>
-        </div>
-      )}
+      <div className="min-h-[120px] space-y-3">
+        {isLoading && <Skeleton className="h-20 w-full" />}
 
-      <div className="space-y-3">
+        {!isLoading && filteredEvents.length === 0 && (
+          <div className="pt-6 text-center">
+            <CalendarDays className="mx-auto mb-3 h-9 w-9 text-gray-300 dark:text-gray-600" aria-hidden="true" />
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Nessun evento il <span className="font-medium capitalize">{format(selectedDate, "d MMMM", { locale: it })}</span>
+            </p>
+          </div>
+        )}
         {filteredEvents.map((event) => {
           const isRegistered = event.participants.length > 0;
           const isFull = !!event.userLimit && event._count.participants >= event.userLimit && !isRegistered;
@@ -445,13 +449,17 @@ export function EventDetailDialog({
                 {feedbackOpen && (
                   <div className="space-y-3 rounded-lg border p-3">
                     <p className="text-sm font-medium">Come è andata?</p>
-                    <div className="flex justify-center gap-4">
-                      {[1, 2, 3].map((v) => (
-                        <button key={v} onClick={() => setEmoji(v)} aria-pressed={emoji === v} aria-label={EMOJI_MAP[v]}
-                          className={`text-3xl transition-transform hover:scale-110 ${emoji === v ? "scale-125" : "opacity-50"}`}>
-                          {EMOJI_MAP[v]}
-                        </button>
-                      ))}
+                    <div className="flex justify-center gap-6">
+                      {([1, 2, 3] as const).map((v) => {
+                        const Icon = EMOJI_ICONS[v]!;
+                        return (
+                          <button key={v} onClick={() => setEmoji(v)} aria-pressed={emoji === v}
+                            className={cn("transition-all duration-150",
+                              emoji === v ? cn(EMOJI_COLORS[v], "scale-125") : "text-gray-300 opacity-60 hover:opacity-100 dark:text-gray-600")}>
+                            <Icon className="h-10 w-10" aria-hidden="true" />
+                          </button>
+                        );
+                      })}
                     </div>
                     <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Commento opzionale..." rows={2} />
                     <Button className="w-full" disabled={!emoji || submitFeedback.isPending}

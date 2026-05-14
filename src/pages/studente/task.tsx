@@ -26,11 +26,13 @@ import { it } from "date-fns/locale";
 import { cn } from "~/lib/utils";
 import {
   ChevronLeft, ChevronRight, CalendarDays, CheckCircle2, Clock,
-  ListChecks, Search, BookmarkCheck, RefreshCw, Loader2,
+  ListChecks, Search, BookmarkCheck, RefreshCw, Loader2, Frown, Meh, Smile,
 } from "lucide-react";
 import { DateStrip } from "./eventi";
+import { PendingFeedbackSection } from "~/components/PendingFeedbackSection";
 
-const EMOJI_MAP: Record<number, string> = { 1: "😕", 2: "😐", 3: "😊" };
+const EMOJI_ICONS: Record<number, React.ComponentType<{ className?: string }>> = { 1: Frown, 2: Meh, 3: Smile };
+const EMOJI_COLORS: Record<number, string> = { 1: "text-red-500", 2: "text-amber-400", 3: "text-green-500" };
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -258,8 +260,6 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
 
   return (
     <div className="space-y-2">
-      {isLoading && <Skeleton className="h-64 w-full" />}
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full">
           <TabsTrigger value="miei" className="flex-1 gap-1.5">
@@ -274,6 +274,7 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
 
         {/* ── Le mie attività ── */}
         <TabsContent value="miei" className="space-y-4 pt-3">
+          {isLoading && <Skeleton className="h-48 w-full" />}
           {!isLoading && !hasMyTasks && (
             <div className="py-16 text-center">
               <BookmarkCheck className="mx-auto mb-3 h-10 w-10 text-gray-300 dark:text-gray-600" aria-hidden="true" />
@@ -396,6 +397,7 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
 
         {/* ── Esplora (Calendario) ── */}
         <TabsContent value="esplora" className="space-y-4 pt-3">
+          {isLoading && <Skeleton className="h-48 w-full" />}
           {!isLoading && (
             <>
               {/* Scrollable date strip */}
@@ -404,6 +406,9 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
                 onChange={setSelectedDate}
                 highlightedDates={slotTasks.flatMap((t) => t.slots.map((s) => new Date(s.date)))}
               />
+
+              {/* Pending feedbacks */}
+              <PendingFeedbackSection />
 
               <div className="space-y-2">
                 <p className="text-sm font-semibold capitalize text-gray-700 dark:text-gray-300">
@@ -648,13 +653,17 @@ function TaskDetailDialog({ taskId, onClose }: { taskId: string; onClose: () => 
             {feedbackOpen && (
               <div className="space-y-3 rounded-lg border p-3">
                 <p className="text-sm font-medium">Come è andata?</p>
-                <div className="flex justify-center gap-4">
-                  {[1, 2, 3].map((v) => (
-                    <button key={v} onClick={() => setEmoji(v)} aria-pressed={emoji === v} aria-label={EMOJI_MAP[v]}
-                      className={`text-3xl transition-transform hover:scale-110 ${emoji === v ? "scale-125" : "opacity-50"}`}>
-                      {EMOJI_MAP[v]}
-                    </button>
-                  ))}
+                <div className="flex justify-center gap-6">
+                  {([1, 2, 3] as const).map((v) => {
+                    const Icon = EMOJI_ICONS[v]!;
+                    return (
+                      <button key={v} onClick={() => setEmoji(v)} aria-pressed={emoji === v}
+                        className={cn("transition-all duration-150",
+                          emoji === v ? cn(EMOJI_COLORS[v], "scale-125") : "text-gray-300 opacity-60 hover:opacity-100 dark:text-gray-600")}>
+                        <Icon className="h-10 w-10" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
                 </div>
                 <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Commento opzionale..." rows={2} />
                 <Button className="w-full" disabled={!emoji || submitFeedback.isPending}

@@ -46,6 +46,53 @@ export const feedbackRouter = createTRPCRouter({
       });
     }),
 
+  // Student: events and tasks awaiting feedback
+  pending: protectedProcedure.query(async ({ ctx }) => {
+    const user = ctx.session.user;
+    if (!user.structureId) return { events: [], tasks: [] };
+    const now = new Date();
+
+    const [events, tasks] = await Promise.all([
+      ctx.db.event.findMany({
+        where: {
+          structureId: user.structureId,
+          hasFeedback: true,
+          endDate: { lt: now },
+          participants: { some: { userId: user.id } },
+          feedbacks: { none: { userId: user.id } },
+        },
+        select: {
+          id: true, title: true, startDate: true, endDate: true,
+          place: true, image: true,
+          tags: { select: { id: true, name: true } },
+        },
+        orderBy: { endDate: "desc" },
+        take: 10,
+      }),
+      ctx.db.task.findMany({
+        where: {
+          structureId: user.structureId,
+          hasFeedback: true,
+          slots: { some: { date: { lt: now }, occupations: { some: { userId: user.id, isActive: true } } } },
+          feedbacks: { none: { userId: user.id } },
+        },
+        select: {
+          id: true, title: true, image: true,
+          tags: { select: { id: true, name: true } },
+          slots: {
+            where: { date: { lt: now }, occupations: { some: { userId: user.id, isActive: true } } },
+            select: { date: true, slotStart: true, slotEnd: true },
+            orderBy: { date: "desc" },
+            take: 1,
+          },
+        },
+        take: 10,
+      }),
+    ]);
+
+    return { events, tasks };
+  }),
+
   // Student: own feedback history
   myHistory: protectedProcedure.query(async ({ ctx }) => {
     const user = ctx.session.user;
