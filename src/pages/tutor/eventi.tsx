@@ -567,8 +567,10 @@ function ParticipantDialog({ eventId, onClose }: { eventId: string; onClose: () 
     onError: (e) => toast.error(e.message),
   });
 
-  const participantIds = new Set(event?.participants.map((p) => p.userId) ?? []);
-  const enrolled = allUsers.filter((u) => participantIds.has(u.id));
+  // Tutor getById always includes user on each participant via Prisma include
+  type EP = { userId: string; user: { id: string; name: string | null; username: string } };
+  const enrolled = ((event?.participants ?? []) as EP[]).map((p) => p.user);
+  const participantIds = new Set(enrolled.map((u) => u.id));
   const lowerSearch = search.toLowerCase();
   const notEnrolled = allUsers
     .filter((u) => !participantIds.has(u.id) && !u.deletedAt)
