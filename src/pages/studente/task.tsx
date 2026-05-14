@@ -524,21 +524,12 @@ const StudenteTaskPage: NextPageWithLayout = function StudenteTaskPage() {
 function TaskDetailDialog({ taskId, onClose }: { taskId: string; onClose: () => void }) {
   const utils = api.useUtils();
   const { data: task, isLoading } = api.task.getById.useQuery({ id: taskId });
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [emoji, setEmoji] = useState<number | null>(null);
-  const [text, setText] = useState("");
-
   const toggleMut = api.task.toggleOccupation.useMutation({
     onSuccess: () => {
       void utils.task.getById.invalidate({ id: taskId });
       void utils.task.list.invalidate();
       toast.success("Iscrizione aggiornata");
     },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const submitFeedback = api.feedback.submit.useMutation({
-    onSuccess: () => { toast.success("Feedback inviato"); setFeedbackOpen(false); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -641,37 +632,6 @@ function TaskDetailDialog({ taskId, onClose }: { taskId: string; onClose: () => 
               )}
             </div>
 
-            {task.hasFeedback && !feedbackOpen && (
-              <>
-                <Separator />
-                <Button variant="outline" className="w-full gap-2" onClick={() => setFeedbackOpen(true)}>
-                  ⭐ Lascia feedback
-                </Button>
-              </>
-            )}
-
-            {feedbackOpen && (
-              <div className="space-y-3 rounded-lg border p-3">
-                <p className="text-sm font-medium">Come è andata?</p>
-                <div className="flex justify-center gap-6">
-                  {([1, 2, 3] as const).map((v) => {
-                    const Icon = EMOJI_ICONS[v]!;
-                    return (
-                      <button key={v} onClick={() => setEmoji(v)} aria-pressed={emoji === v}
-                        className={cn("transition-all duration-150",
-                          emoji === v ? cn(EMOJI_COLORS[v], "scale-125") : "text-gray-300 opacity-60 hover:opacity-100 dark:text-gray-600")}>
-                        <Icon className="h-10 w-10" aria-hidden="true" />
-                      </button>
-                    );
-                  })}
-                </div>
-                <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Commento opzionale..." rows={2} />
-                <Button className="w-full" disabled={!emoji || submitFeedback.isPending}
-                  onClick={() => submitFeedback.mutate({ taskId: task.id, emoji: emoji!, text: text || undefined })}>
-                  Invia feedback
-                </Button>
-              </div>
-            )}
           </>
         ) : null}
       </DialogContent>
