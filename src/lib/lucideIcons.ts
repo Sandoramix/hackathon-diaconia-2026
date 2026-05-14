@@ -180,6 +180,7 @@ export const ICON_COLOR_MAP = Object.fromEntries(
 export interface IconLayer {
   name: string;
   color: IconColorName;
+  className?: string;
 }
 
 export type ParsedIcon =

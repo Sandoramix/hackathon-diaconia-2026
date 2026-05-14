@@ -120,7 +120,7 @@ function LucideIconPicker({
 
       {/* Icon grid */}
       <div
-        className="grid grid-cols-6 gap-1.5 max-h-48 overflow-y-auto pr-1"
+        className="grid grid-cols-6 gap-1.5 max-h-48 overflow-y-auto p-1"
         role="listbox"
         aria-label="Icone disponibili"
       >

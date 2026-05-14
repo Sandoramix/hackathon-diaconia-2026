@@ -20,19 +20,28 @@ export const RenderIcon = ({
 
   if (parsed.type === "composite") {
     if (parsed.layers.length === 0) return null;
+    const { size, ...restIconProps } = iconProps as { size?: number } & typeof iconProps;
+    const iconSize = size ?? 24;
+    const multi = parsed.layers.length > 1;
     return (
-      <span className={cn("relative inline-flex", className)} style={style}>
+      <span
+        className={cn("relative inline-flex items-center justify-center flex-shrink-0", className)}
+        style={{ width: iconSize, height: iconSize, ...style }}
+      >
         {parsed.layers.map((layer, i) => {
           const color = ICON_COLOR_MAP[layer.color];
+          const layerSize = multi && i === 0 ? Math.round(iconSize * 0.6) : iconSize;
           return (
             <LucideIcon
               key={i}
               name={layer.name}
-              {...iconProps}
+              {...restIconProps}
+              size={layerSize}
               className={cn(
                 color?.textColor,
                 color?.darkTextColor,
                 i > 0 && "absolute top-0 left-0",
+                layer.className,
               )}
             />
           );
