@@ -259,6 +259,31 @@ export const historyRouter = createTRPCRouter({
       return { ...history, student };
     }),
 
+  // Tutor: full history export (no pagination, respects type/date filters)
+  exportForStudent: tutorProcedure
+    .input(z.object({
+      studentId: z.string(),
+      type: z.enum(ACTIVITY_TYPES).optional(),
+      dateFrom: z.date().optional(),
+      dateTo: z.date().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const student = await ctx.db.user.findFirst({
+        where: { id: input.studentId, structureId: ctx.session.user.structureId },
+        select: { id: true, name: true, username: true },
+      });
+      if (!student) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const history = await buildHistory(
+        ctx.db,
+        input.studentId,
+        { type: input.type, dateFrom: input.dateFrom, dateTo: input.dateTo },
+        null,
+        2000,
+      );
+      return { entries: history.entries, student };
+    }),
+
   // Tutor: add note to student
   addNote: tutorProcedure
     .input(z.object({ studentId: z.string(), content: z.string().min(1).max(2000) }))

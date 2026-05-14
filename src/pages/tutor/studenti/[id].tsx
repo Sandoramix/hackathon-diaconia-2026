@@ -21,6 +21,45 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Download } from "lucide-react";
+
+function exportToCSV(
+  entries: { date: Date | string; type: string; title: string; description: string }[],
+  student: { name: string | null; username: string },
+) {
+  const TYPE_LABELS_EXPORT: Record<string, string> = {
+    event: "Evento",
+    slot: "Slot task",
+    task_complete: "Completato",
+    feedback: "Feedback",
+    note: "Nota tutor",
+  };
+
+  const header = ["Data", "Ora", "Tipo", "Titolo", "Descrizione"];
+  const rows = entries.map((e) => [
+    format(new Date(e.date), "dd/MM/yyyy"),
+    format(new Date(e.date), "HH:mm"),
+    TYPE_LABELS_EXPORT[e.type] ?? e.type,
+    e.title,
+    e.description,
+  ]);
+
+  const csv =
+    "﻿" + // BOM for Excel UTF-8
+    [header, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\r\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `storico_${student.username}_${format(new Date(), "yyyy-MM-dd")}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   event:         { label: "Evento",      color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" },
@@ -41,6 +80,7 @@ const StudentStorico: NextPageWithLayout = function StudentStorico() {
   const [noteText, setNoteText] = useState("");
   const [cursor, setCursor] = useState<Date | undefined>(undefined);
   const [allEntries, setAllEntries] = useState<{ id: string; date: Date; type: string; title: string; description: string; meta?: Record<string, unknown> }[]>([]);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") void router.replace("/auth/tipo");
@@ -50,6 +90,29 @@ const StudentStorico: NextPageWithLayout = function StudentStorico() {
   }, [status, session, router]);
 
   const utils = api.useUtils();
+
+  const handleExport = async () => {
+    if (!studentId) return;
+    setExporting(true);
+    try {
+      const result = await utils.history.exportForStudent.fetch({
+        studentId,
+        type: typeFilter !== "all" ? (typeFilter as "event" | "slot" | "task_complete" | "feedback" | "note") : undefined,
+        dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+        dateTo: dateTo ? new Date(dateTo) : undefined,
+      });
+      if (result.entries.length === 0) {
+        toast.info("Nessuna voce da esportare");
+        return;
+      }
+      exportToCSV(result.entries, result.student);
+      toast.success(`Esportate ${result.entries.length} voci`);
+    } catch {
+      toast.error("Errore durante l'esportazione");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const queryInput = {
     studentId: studentId ?? "",
@@ -116,12 +179,22 @@ const StudentStorico: NextPageWithLayout = function StudentStorico() {
           >
             ←
           </button>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="font-semibold text-gray-900 dark:text-gray-100">
               {data.student.name ?? data.student.username}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">@{data.student.username}</p>
           </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleExport}
+            disabled={exporting}
+            className="gap-1.5 shrink-0"
+          >
+            <Download className="h-3.5 w-3.5" aria-hidden="true" />
+            {exporting ? "Esportazione..." : "Esporta CSV"}
+          </Button>
         </div>
       )}
 
