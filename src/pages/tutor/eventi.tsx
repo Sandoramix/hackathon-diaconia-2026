@@ -34,15 +34,20 @@ import { format, isSameDay, startOfDay, addMonths, subMonths, startOfMonth, endO
 import { it } from "date-fns/locale";
 import { DateStrip, EventDetailDialog } from "~/pages/studente/eventi";
 
-const eventSchema = z.object({
-  title: z.string().min(1, "Obbligatorio"),
-  description: z.string().optional(),
-  place: z.string().optional(),
-  startDate: z.string().min(1, "Obbligatorio"),
-  endDate: z.string().min(1, "Obbligatorio"),
-  userLimit: z.string().optional(),
-  hasFeedback: z.boolean(),
-});
+const eventSchema = z
+  .object({
+    title: z.string().min(1, "Obbligatorio"),
+    description: z.string().optional(),
+    place: z.string().optional(),
+    startDate: z.string().min(1, "Obbligatorio"),
+    endDate: z.string().min(1, "Obbligatorio"),
+    userLimit: z.string().optional(),
+    hasFeedback: z.boolean(),
+  })
+  .refine((d) => !d.startDate || !d.endDate || new Date(d.startDate) < new Date(d.endDate), {
+    message: "La fine deve essere dopo l'inizio",
+    path: ["endDate"],
+  });
 
 type EventForm = z.infer<typeof eventSchema>;
 
@@ -442,11 +447,24 @@ const EventiPage: NextPageWithLayout = function EventiPage() {
             <div className="grid grid-cols-2 gap-3">
               <Field label="Data inizio*">
                 <Controller control={form.control} name="startDate"
-                  render={({ field }) => <DateTimePicker value={field.value ?? ""} onChange={field.onChange} />} />
+                  render={({ field }) => (
+                    <DateTimePicker value={field.value ?? ""} onChange={(v) => {
+                      field.onChange(v);
+                      const end = form.getValues("endDate");
+                      if (v && end && new Date(v) >= new Date(end)) {
+                        const d = new Date(v);
+                        d.setHours(d.getHours() + 1);
+                        form.setValue("endDate", d.toISOString().slice(0, 16), { shouldValidate: true });
+                      }
+                    }} />
+                  )} />
               </Field>
               <Field label="Data fine*">
                 <Controller control={form.control} name="endDate"
                   render={({ field }) => <DateTimePicker value={field.value ?? ""} onChange={field.onChange} />} />
+                {form.formState.errors.endDate && (
+                  <p className="col-span-2 text-xs text-red-600">{form.formState.errors.endDate.message}</p>
+                )}
               </Field>
             </div>
             <Field label="Limite studenti (opzionale)">
