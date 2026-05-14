@@ -6,11 +6,11 @@ import {
   Users, User, UserCheck, UserX, MessageCircle, MessageSquare,
   BookOpen, Book, Music, Palette, Dumbbell, Coffee, Utensils,
   Clock, Timer, AlarmClock, CalendarDays, CalendarClock,
-  Smartphone, Monitor, Wifi, Volume2, VolumeX, Tv, Headphones, Camera,
+  Smartphone, Monitor, Wifi, Volume1, Volume2, VolumeX, Tv, Headphones, Camera,
   Home, School, Building2, Bed, Key, Lock, Unlock, Bell, BellOff,
   Info, HelpCircle, FileText, ClipboardList, ListChecks,
   Sun, Moon, Flame, Zap, Leaf, Trash2, Recycle,
-  Hand, Handshake,
+  Hand, Handshake, HeartHandshake,
   Accessibility, Footprints,
   MapPin, Navigation,
   Pencil, Settings, Plus, Minus, X,
@@ -21,6 +21,7 @@ import {
   Gamepad2,
   Bike,
   SunMedium,
+  Cigarette, Syringe, Wine, SprayCan, Wallet, Ear,
 } from "lucide-react";
 
 export interface IconEntry {
@@ -57,7 +58,8 @@ export const ICON_LIST: IconEntry[] = [
   { name: "User",         Icon: User,         keywords: ["persona", "uno"] },
   { name: "UserCheck",    Icon: UserCheck,    keywords: ["approvato", "confermato"] },
   { name: "UserX",        Icon: UserX,        keywords: ["escluso", "bandito"] },
-  { name: "Handshake",    Icon: Handshake,    keywords: ["accordo", "rispetto", "patto"] },
+  { name: "Handshake",       Icon: Handshake,       keywords: ["accordo", "rispetto", "patto"] },
+  { name: "HeartHandshake",  Icon: HeartHandshake,  keywords: ["gentile", "generoso", "disponibile", "aiuto"] },
   { name: "MessageCircle",Icon: MessageCircle,keywords: ["chat", "parlare", "comunicare"] },
   { name: "MessageSquare",Icon: MessageSquare,keywords: ["messaggio", "testo"] },
   { name: "Hand",         Icon: Hand,         keywords: ["stop", "mano", "alt"] },
@@ -86,6 +88,7 @@ export const ICON_LIST: IconEntry[] = [
   { name: "Smartphone",   Icon: Smartphone,   keywords: ["telefono", "cellulare", "mobile"] },
   { name: "Monitor",      Icon: Monitor,      keywords: ["computer", "schermo", "pc"] },
   { name: "Wifi",         Icon: Wifi,         keywords: ["internet", "connessione", "wifi"] },
+  { name: "Volume1",      Icon: Volume1,      keywords: ["voce bassa", "piano", "basso"] },
   { name: "Volume2",      Icon: Volume2,      keywords: ["volume", "suono", "audio"] },
   { name: "VolumeX",      Icon: VolumeX,      keywords: ["silenzio", "muto", "no suono"] },
   { name: "Tv",           Icon: Tv,           keywords: ["televisione", "tv"] },
@@ -128,6 +131,14 @@ export const ICON_LIST: IconEntry[] = [
   { name: "Laugh",        Icon: Laugh,        keywords: ["ridere", "divertirsi", "allegro"] },
   { name: "Frown",        Icon: Frown,        keywords: ["triste", "dispiaciuto", "male"] },
   { name: "Meh",          Icon: Meh,          keywords: ["indifferente", "cosi cosi"] },
+
+  // Regole struttura
+  { name: "Cigarette",    Icon: Cigarette,    keywords: ["fumo", "sigaretta", "vietato fumare"] },
+  { name: "Syringe",      Icon: Syringe,      keywords: ["droga", "siringa", "sostanze"] },
+  { name: "Wine",         Icon: Wine,         keywords: ["alcol", "vino", "bevanda alcolica"] },
+  { name: "SprayCan",     Icon: SprayCan,     keywords: ["pulizia", "spray", "pulire"] },
+  { name: "Wallet",       Icon: Wallet,       keywords: ["soldi", "portafoglio", "responsabile", "risorse"] },
+  { name: "Ear",          Icon: Ear,          keywords: ["ascolto", "ascoltare", "orecchio"] },
 ];
 
 export const ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
