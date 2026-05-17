@@ -109,12 +109,13 @@ export const userRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const existing = await ctx.db.user.findUnique({ where: { username: input.username } });
+      const username = input.username.toLowerCase().trim();
+      const existing = await ctx.db.user.findUnique({ where: { username } });
       if (existing) throw new TRPCError({ code: "CONFLICT", message: "Username già in uso" });
 
       return ctx.db.user.create({
         data: {
-          username: input.username,
+          username,
           password: input.password,
           role: input.role,
           name: input.name,
@@ -140,8 +141,9 @@ export const userRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const prefix = input.prefix.toLowerCase().trim();
       const users = Array.from({ length: input.count }, (_, i) => ({
-        username: `${input.prefix}${String(i + 1).padStart(3, "0")}`,
+        username: `${prefix}${String(i + 1).padStart(3, "0")}`,
         password: input.passwordTemplate,
         role: "STUDENTE" as const,
         mustChangePassword: input.mustChangePassword,
